@@ -93,11 +93,12 @@ export default function Home({ items, categories, month, onAdd, onSeeAll }: Prop
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <StatTile tone="expense" label="הוצאות" value={formatMoney(stats.expense)} mark={EXPENSE_COLOR}>
-          <Delta value={change(stats.expense, prev.expense)} upIsGood={false} />
-        </StatTile>
+        {/* כל כרטיס מעל הכפתור עם אותו שם: הכנסות מימין, הוצאות משמאל */}
         <StatTile tone="income" label="הכנסות" value={formatMoney(stats.income)} mark={INCOME_COLOR}>
           <Delta value={change(stats.income, prev.income)} upIsGood />
+        </StatTile>
+        <StatTile tone="expense" label="הוצאות" value={formatMoney(stats.expense)} mark={EXPENSE_COLOR}>
+          <Delta value={change(stats.expense, prev.expense)} upIsGood={false} />
         </StatTile>
       </div>
 
