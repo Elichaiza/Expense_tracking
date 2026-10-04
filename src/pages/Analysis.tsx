@@ -9,14 +9,20 @@ import { formatCompact, formatMoney, monthLabel, shortMonth } from '../lib/forma
 import {
   AXIS, EXPENSE_COLOR, GRID, INCOME_COLOR, MUTED_LIGHT, SERIES, categoryColors,
 } from '../lib/colors'
-import type { Category, Expense, Kind } from '../lib/types'
-import { Delta, Legend, Section, Segmented, kindColor } from '../components/ui'
+import type { Budget, Category, Expense, Kind } from '../lib/types'
+import { BudgetMeter, BudgetStatus, Delta, Legend, Section, Segmented, kindColor } from '../components/ui'
+import BudgetSheet from '../components/BudgetSheet'
+import { budgetLevel } from '../lib/analytics'
+import { removeBudget, saveBudget } from '../lib/budgets'
 
 type Props = {
+  householdId: string
   items: Expense[]
   categories: Category[]
+  budgets: Budget[]
   members: Record<string, string>
   month: string
+  onChanged: () => void
 }
 
 const WEEKDAY_SHORT = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳']
@@ -41,8 +47,11 @@ function MoneyTooltip({ active, payload, label, labels }: {
   )
 }
 
-export default function Analysis({ items, categories, members, month }: Props) {
+export default function Analysis({ householdId, items, categories, budgets, members, month, onChanged }: Props) {
   const [kind, setKind] = useState<Kind>('expense')
+  const [editing, setEditing] = useState<string | null>(null) // קטגוריה שעורכים לה תקציב
+  const budgetOf = (id: string) => budgets.find((b) => b.category_id === id)
+  const editingCat = categories.find((c) => c.id === editing)
   const accent = kindColor(kind)
   const colors = useMemo(() => categoryColors(categories), [categories])
 
@@ -131,15 +140,40 @@ export default function Analysis({ items, categories, members, month }: Props) {
                     <span className="flex-1 min-w-0 truncate font-medium">{r.name}</span>
                     <span className="font-semibold">{formatMoney(r.value)}</span>
                   </div>
-                  <div className="flex items-center gap-3 mt-2 ps-9">
-                    <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{ width: `${r.share}%`, background: colors[r.id] ?? MUTED_LIGHT }}
-                      />
+                  {kind === 'expense' && budgetOf(r.id) ? (
+                    // לקטגוריה עם תקציב: הפס הופך לפס תקציב. לחיצה עליו פותחת עריכה
+                    (() => {
+                      const b = budgetOf(r.id)!
+                      const p = (r.value / b.amount) * 100
+                      const level = budgetLevel(p)
+                      return (
+                        <button
+                          type="button"
+                          className="block w-full ps-9 mt-2 text-start"
+                          onClick={() => setEditing(r.id)}
+                          aria-label={`עריכת התקציב של ${r.name}`}
+                        >
+                          <BudgetMeter pct={p} level={level} />
+                          <div className="flex items-center justify-between mt-1.5 text-xs text-slate-500">
+                            <span>
+                              {formatMoney(r.value)} מתוך {formatMoney(b.amount)} · {Math.round(p)}%
+                            </span>
+                            <BudgetStatus level={level} />
+                          </div>
+                        </button>
+                      )
+                    })()
+                  ) : (
+                    <div className="flex items-center gap-3 mt-2 ps-9">
+                      <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${r.share}%`, background: colors[r.id] ?? MUTED_LIGHT }}
+                        />
+                      </div>
+                      <span className="text-xs text-slate-500 w-9 text-start">{Math.round(r.share)}%</span>
                     </div>
-                    <span className="text-xs text-slate-500 w-9 text-start">{Math.round(r.share)}%</span>
-                  </div>
+                  )}
                   <div className="ps-9 mt-1.5">
                     <Delta value={r.delta} upIsGood={kind === 'income'} />
                   </div>
@@ -323,6 +357,25 @@ export default function Analysis({ items, categories, members, month }: Props) {
             </ul>
           </div>
         </Section>
+      )}
+
+      {editing && editingCat && (
+        <BudgetSheet
+          title={`תקציב ל${editingCat.name}`}
+          hint={`כמה אתם רוצים להוציא על ${editingCat.name} בחודש?`}
+          current={budgetOf(editing)?.amount}
+          onSave={async (n) => {
+            const res = await saveBudget(householdId, editing, n)
+            onChanged()
+            return res
+          }}
+          onRemove={async () => {
+            const res = await removeBudget(householdId, editing)
+            onChanged()
+            return res
+          }}
+          onClose={() => setEditing(null)}
+        />
       )}
 
       {d.avg.monthsUsed > 0 && (

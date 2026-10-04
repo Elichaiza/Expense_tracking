@@ -60,7 +60,7 @@ function Main({ household }: { household: Household }) {
   const [month, setMonth] = useState(() => monthKey(todayIso()))
   const [adding, setAdding] = useState<Kind | null>(null)
   const [uid, setUid] = useState<string | null>(null)
-  const { expenses: items, categories, recurring, members, loading, reload } = useHouseholdData(household.id)
+  const { expenses: items, categories, recurring, budgets, members, loading, reload } = useHouseholdData(household.id)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUid(data.user?.id ?? null))
@@ -109,6 +109,7 @@ function Main({ household }: { household: Household }) {
           <Home
             items={items}
             categories={categories}
+            budgets={budgets}
             month={month}
             onAdd={setAdding}
             onSeeAll={(k) => setTab(k === 'income' ? 'income' : 'expenses')}
@@ -124,12 +125,21 @@ function Main({ household }: { household: Household }) {
             onChanged={reload}
           />
         ) : tab === 'analysis' ? (
-          <Analysis items={items} categories={categories} members={members} month={month} />
+          <Analysis
+            householdId={household.id}
+            items={items}
+            categories={categories}
+            budgets={budgets}
+            members={members}
+            month={month}
+            onChanged={reload}
+          />
         ) : (
           <Settings
             household={household}
             categories={categories}
             recurring={recurring}
+            budgets={budgets}
             items={items}
             members={members}
             onChanged={reload}

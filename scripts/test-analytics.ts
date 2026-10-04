@@ -1,8 +1,8 @@
 // הרצה: node scripts/test-analytics.ts   (Node 22+ מריץ TypeScript ישירות)
 import assert from 'node:assert/strict'
 import {
-  addMonths, averages, byCategory, change, daysInMonth, insights, memberTotals,
-  monthStats, paceSeries, projection, topMerchants, trend, weekdayTotals,
+  addMonths, averages, budgetLevel, budgetSummary, byCategory, change, daysInMonth, insights,
+  memberTotals, monthStats, paceSeries, projection, topMerchants, trend, weekdayTotals,
 } from '../src/lib/analytics.ts'
 
 let n = 0
@@ -115,5 +115,59 @@ t('insights: flags overspending and rising category', () => {
 t('insights: high savings rate is celebrated', () => {
   const r = insights(items, cats, '2026-10', '2026-10-04')
   assert.ok(r.some((x) => x.id === 'saving' && x.tone === 'good'))
+})
+const B = (cat: string | null, amount: number) => ({ key: cat ?? 'total', category_id: cat, amount })
+
+t('budgetLevel thresholds', () => {
+  assert.equal(budgetLevel(79.4), 'ok')
+  assert.equal(budgetLevel(79.5), 'warn') // מוצג כ-80%, לכן גם מסומן כמתקרבים
+  assert.equal(budgetLevel(80), 'warn')
+  assert.equal(budgetLevel(99.4), 'warn')
+  assert.equal(budgetLevel(99.5), 'over') // מוצג כ-100%
+  assert.equal(budgetLevel(100), 'over')
+  assert.equal(budgetLevel(250), 'over')
+})
+t('budgetSummary: category rows sorted by usage, explicit total', () => {
+  const s = budgetSummary(items, cats, [B('food', 1250), B('fuel', 1000), B(null, 2000)], '2026-10')
+  assert.deepEqual(s.rows.map((r) => r.categoryId), ['food', 'fuel']) // food 1000/1250=80%, fuel 300/1000=30%
+  assert.equal(Math.round(s.rows[0].pct), 80)
+  assert.equal(s.rows[0].level, 'warn')
+  assert.equal(s.rows[1].level, 'ok')
+  assert.equal(s.overall!.derived, false)
+  assert.equal(s.overall!.budget, 2000)
+  assert.equal(s.overall!.spent, 1300)
+  assert.equal(Math.round(s.overall!.pct), 65)
+})
+t('budgetSummary: without a total, overall is derived from category budgets', () => {
+  const s = budgetSummary(items, cats, [B('food', 800), B('fuel', 200)], '2026-10')
+  assert.equal(s.overall!.derived, true)
+  assert.equal(s.overall!.budget, 1000)
+  assert.equal(s.overall!.spent, 1300)
+  assert.equal(s.overall!.level, 'over')
+})
+t('budgetSummary: no budgets gives nothing, ignores deleted categories', () => {
+  assert.equal(budgetSummary(items, cats, [], '2026-10').overall, null)
+  const s = budgetSummary(items, cats, [B('gone', 500)], '2026-10')
+  assert.equal(s.rows.length, 0)
+  assert.equal(s.overall, null)
+})
+t('budgetSummary: a budgeted category with no spending is 0%', () => {
+  const s = budgetSummary(items, cats, [B('fuel', 500)], '2026-08')
+  assert.equal(s.rows[0].spent, 0)
+  assert.equal(s.rows[0].pct, 0)
+  assert.equal(s.rows[0].level, 'ok')
+})
+t('insights: budget alerts appear only when near or over', () => {
+  const calm = insights(items, cats, '2026-10', '2026-10-04', [B('food', 5000), B(null, 9000)])
+  assert.ok(!calm.some((x) => x.id.startsWith('budget')))
+  const near = insights(items, cats, '2026-10', '2026-10-04', [B('food', 1200)])
+  assert.ok(near.some((x) => x.id === 'budget-food' && x.title.includes('83%')))
+  const over = insights(items, cats, '2026-10', '2026-10-04', [B('food', 500), B(null, 1000)])
+  assert.ok(over.some((x) => x.id === 'budget-total' && x.icon === '🚨'))
+  assert.ok(over.some((x) => x.id === 'budget-food' && x.title.includes('חריגה')))
+})
+t('insights: derived overall never produces a total alert', () => {
+  const r = insights(items, cats, '2026-10', '2026-10-04', [B('food', 500)])
+  assert.ok(!r.some((x) => x.id === 'budget-total'))
 })
 console.log(`\n${n} checks passed`)

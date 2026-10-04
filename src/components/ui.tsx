@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { formatMoney, monthKey, monthLabel, todayIso } from '../lib/format'
-import { addMonths } from '../lib/analytics'
+import { addMonths, type BudgetLevel } from '../lib/analytics'
 import { EXPENSE_COLOR, INCOME_COLOR } from '../lib/colors'
 import { IconArrowDown, IconArrowUp, IconChevronLeft, IconChevronRight } from './Icons'
 
@@ -160,6 +160,34 @@ export function Segmented<T extends string>({
   )
 }
 
-export const kindColor = (kind: 'income' | 'expense') => (kind === 'income' ? INCOME_COLOR : EXPENSE_COLOR)
+// צבעי מצב קבועים (תקין / מתקרבים / חריגה). תמיד מלווים בטקסט וסמל, לא בצבע בלבד
+const LEVEL_COLOR: Record<BudgetLevel, string> = { ok: '#0ca30c', warn: '#fab219', over: '#d03b3b' }
+
+export function BudgetMeter({ pct, level }: { pct: number; level: BudgetLevel }) {
+  return (
+    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+      <div
+        className="h-full rounded-full transition-all duration-700"
+        style={{ width: `${Math.min(100, pct)}%`, background: LEVEL_COLOR[level] }}
+      />
+    </div>
+  )
+}
+
+/** תג מצב. במצב תקין לא מוצג כלום, כדי לא להעמיס */
+export function BudgetStatus({ level }: { level: BudgetLevel }) {
+  if (level === 'ok') return null
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+        level === 'over' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-800'
+      }`}
+    >
+      {level === 'over' ? '🚨 חריגה' : '⚠️ מתקרבים'}
+    </span>
+  )
+}
+
+export const kindColor =(kind: 'income' | 'expense') => (kind === 'income' ? INCOME_COLOR : EXPENSE_COLOR)
 
 export { formatMoney }

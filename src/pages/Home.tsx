@@ -1,17 +1,19 @@
 import { useMemo } from 'react'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import {
-  averages, change, insights, monthStats, paceSeries, projection, addMonths, type Insight,
+  averages, budgetSummary, change, insights, monthStats, paceSeries, projection, addMonths,
+  type Insight,
 } from '../lib/analytics'
 import { formatCompact, formatDate, formatMoney, formatMoneySigned, monthLabel, todayIso } from '../lib/format'
 import { AXIS, EXPENSE_COLOR, GRID, INCOME_COLOR, MUTED } from '../lib/colors'
-import type { Category, Expense, Kind } from '../lib/types'
-import { Delta, Legend, Section, StatTile } from '../components/ui'
+import type { Budget, Category, Expense, Kind } from '../lib/types'
+import { BudgetMeter, BudgetStatus, Delta, Legend, Section, StatTile } from '../components/ui'
 import { IconExpense, IconIncome, IconPlus } from '../components/Icons'
 
 type Props = {
   items: Expense[]
   categories: Category[]
+  budgets: Budget[]
   month: string
   onAdd: (kind: Kind) => void
   onSeeAll: (kind: Kind) => void
@@ -36,7 +38,7 @@ function PaceTooltip({ active, payload, label }: { active?: boolean; payload?: {
   )
 }
 
-export default function Home({ items, categories, month, onAdd, onSeeAll }: Props) {
+export default function Home({ items, categories, budgets, month, onAdd, onSeeAll }: Props) {
   const today = todayIso()
   const prevMonth = addMonths(month, -1)
 
@@ -49,9 +51,10 @@ export default function Home({ items, categories, month, onAdd, onSeeAll }: Prop
       proj: projection(items, month, today),
       avg: averages(items, month, 3),
       pace: paceSeries(items, month, 'expense', today),
-      tips: insights(items, categories, month, today),
+      tips: insights(items, categories, month, today, budgets),
+      budget: budgetSummary(items, categories, budgets, month),
     }
-  }, [items, categories, month, prevMonth, today])
+  }, [items, categories, budgets, month, prevMonth, today])
 
   const { stats, prev, proj, avg } = d
   const ratio = stats.income > 0 ? (stats.expense / stats.income) * 100 : null
@@ -110,6 +113,45 @@ export default function Home({ items, categories, month, onAdd, onSeeAll }: Prop
           <IconPlus className="w-5 h-5" /> הוצאה
         </button>
       </div>
+
+      {/* תקציב: מופיע רק אם הוגדר תקציב */}
+      {d.budget.overall && (
+        <div className="card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold">🎯 {d.budget.overall.derived ? 'תקציב החודש' : 'התקציב החודשי'}</h2>
+            <BudgetStatus level={d.budget.overall.level} />
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-xl font-bold">{formatMoney(d.budget.overall.spent)}</span>
+            <span className="text-sm text-slate-500">
+              מתוך {formatMoney(d.budget.overall.budget)} · {Math.round(d.budget.overall.pct)}%
+            </span>
+          </div>
+          <BudgetMeter pct={d.budget.overall.pct} level={d.budget.overall.level} />
+          <div className="text-xs text-slate-500">
+            {d.budget.overall.level === 'over'
+              ? `חריגה של ${formatMoney(d.budget.overall.spent - d.budget.overall.budget)}`
+              : `נשארו ${formatMoney(d.budget.overall.budget - d.budget.overall.spent)}`}
+          </div>
+          {d.budget.rows.some((r) => r.level !== 'ok') && (
+            <ul className="divide-y divide-slate-100 border-t border-slate-100">
+              {d.budget.rows
+                .filter((r) => r.level !== 'ok')
+                .slice(0, 3)
+                .map((r) => (
+                  <li key={r.categoryId} className="flex items-center gap-2 py-2.5 text-sm">
+                    <span className="text-lg">{r.icon}</span>
+                    <span className="flex-1 min-w-0 truncate font-medium">{r.name}</span>
+                    <span className="text-slate-500 text-xs">
+                      {formatMoney(r.spent)} / {formatMoney(r.budget)}
+                    </span>
+                    <BudgetStatus level={r.level} />
+                  </li>
+                ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* תובנות */}
       <Section title="תובנות" hint="מחושבות אוטומטית מהנתונים שלכם">

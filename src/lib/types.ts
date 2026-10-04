@@ -24,4 +24,7 @@ export type Recurring = {
   kind: Kind
 }
 
+// תקציב חודשי חוזר. category_id ריק = התקציב הכולל
+export type Budget = { key: string; category_id: string | null; amount: number }
+
 export type Household = { id: string; name: string; invite_code: string }

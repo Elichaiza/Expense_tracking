@@ -1,4 +1,4 @@
-import type { Category, Expense, Kind } from './types'
+import type { Budget, Category, Expense, Kind } from './types'
 
 // כל החישובים כאן הם פונקציות טהורות (בלי React), כדי שיהיה קל לבדוק אותן.
 // חודשים מיוצגים כמחרוזת 'YYYY-MM', ותאריכים כ-'YYYY-MM-DD'.
@@ -234,6 +234,68 @@ export function projection(items: Expense[], month: string, today: string): Proj
   return { dailyAvg, projected: isCurrent ? dailyAvg * days : expense, elapsedDays: elapsed, isCurrent }
 }
 
+// ---------- תקציבים ----------
+
+export type BudgetLevel = 'ok' | 'warn' | 'over'
+
+/** מתחת ל-80% תקין, מ-80% מתקרבים, מ-100% חריגה. הסף על המספר המעוגל שמוצג למשתמש */
+export const budgetLevel = (pct: number): BudgetLevel => {
+  const shown = Math.round(pct)
+  return shown >= 100 ? 'over' : shown >= 80 ? 'warn' : 'ok'
+}
+
+export type BudgetRow = {
+  categoryId: string | null
+  name: string
+  icon: string
+  budget: number
+  spent: number
+  pct: number
+  level: BudgetLevel
+}
+
+export type BudgetSummary = {
+  /** התקציב הכולל. אם לא הוגדר, מחושב מסכום תקציבי הקטגוריות (derived) */
+  overall: (BudgetRow & { derived: boolean }) | null
+  /** תקציבי הקטגוריות, מהמנוצל ביותר לפחות */
+  rows: BudgetRow[]
+}
+
+export function budgetSummary(
+  items: Expense[],
+  categories: Category[],
+  budgets: Budget[],
+  month: string,
+): BudgetSummary {
+  const expenses = inMonth(items, month, 'expense')
+  const row = (categoryId: string | null, name: string, icon: string, budget: number, spent: number): BudgetRow => {
+    const p = budget > 0 ? (spent / budget) * 100 : 0
+    return { categoryId, name, icon, budget, spent, pct: p, level: budgetLevel(p) }
+  }
+
+  const rows = budgets
+    .filter((b) => b.category_id)
+    .map((b) => {
+      const c = categories.find((x) => x.id === b.category_id)
+      if (!c) return null
+      const spent = sum(expenses.filter((x) => x.category_id === b.category_id))
+      return row(b.category_id, c.name, c.icon, b.amount, spent)
+    })
+    .filter((r): r is BudgetRow => r !== null)
+    .sort((a, b) => b.pct - a.pct)
+
+  const total = budgets.find((b) => !b.category_id)
+  let overall: BudgetSummary['overall'] = null
+  if (total) {
+    overall = { ...row(null, 'התקציב החודשי', '🎯', total.amount, sum(expenses)), derived: false }
+  } else if (rows.length > 0) {
+    const budget = rows.reduce((s, r) => s + r.budget, 0)
+    const spent = rows.reduce((s, r) => s + r.spent, 0)
+    overall = { ...row(null, 'סך תקציבי הקטגוריות', '🎯', budget, spent), derived: true }
+  }
+  return { overall, rows }
+}
+
 // ---------- תובנות ----------
 
 export type Insight = { id: string; tone: 'good' | 'warn' | 'info'; icon: string; title: string; text: string }
@@ -247,6 +309,7 @@ export function insights(
   categories: Category[],
   month: string,
   today: string,
+  budgets: Budget[] = [],
 ): Insight[] {
   const out: Insight[] = []
   const stats = monthStats(items, month)
@@ -256,6 +319,30 @@ export function insights(
   const avg = averages(items, month, 3)
   const catRows = byCategory(items, categories, month, 'expense')
   const expenses = inMonth(items, month, 'expense')
+
+  // 0. תקציב: מופיע רק כשיש חריגה או התקרבות
+  if (budgets.length > 0) {
+    const bs = budgetSummary(items, categories, budgets, month)
+    if (bs.overall && !bs.overall.derived && bs.overall.level !== 'ok') {
+      const o = bs.overall
+      out.push({
+        id: 'budget-total',
+        tone: 'warn',
+        icon: o.level === 'over' ? '🚨' : '⚠️',
+        title: o.level === 'over' ? 'חרגתם מהתקציב החודשי' : `ניצלתם ${Math.round(o.pct)}% מהתקציב`,
+        text: `${ils(o.spent)} מתוך ${ils(o.budget)}${o.level === 'over' ? `, חריגה של ${ils(o.spent - o.budget)}` : ''}.`,
+      })
+    }
+    for (const r of bs.rows.filter((x) => x.level !== 'ok').slice(0, 2)) {
+      out.push({
+        id: `budget-${r.categoryId}`,
+        tone: 'warn',
+        icon: r.icon,
+        title: r.level === 'over' ? `חריגה ב${r.name}` : `${r.name} ב-${Math.round(r.pct)}% מהתקציב`,
+        text: `${ils(r.spent)} מתוך ${ils(r.budget)}${r.level === 'over' ? `, חריגה של ${ils(r.spent - r.budget)}` : ''}.`,
+      })
+    }
+  }
 
   // 1. מאזן: האם מוציאים יותר ממה שמרוויחים
   if (stats.income > 0 && stats.expense > stats.income) {
