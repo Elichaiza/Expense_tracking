@@ -14,7 +14,7 @@ body {
   margin: 0;
   background: #0f172a;
   color: #f1f5f9;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Hebrew', sans-serif;
+  font-family: 'Heebo', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Hebrew', sans-serif;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
@@ -27,6 +27,130 @@ button {
 
 .field {
   @apply w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-base text-slate-100 outline-none focus:border-emerald-400;
+}
+
+.btn-primary {
+  @apply rounded-2xl bg-gradient-to-l from-emerald-400 to-teal-400 text-slate-950 font-bold px-4 py-3.5 text-base shadow-lg shadow-emerald-500/25 transition active:scale-[.98] disabled:opacity-60;
+}
+
+/* ---------- מסכי כניסה ---------- */
+.glass {
+  background: rgba(15, 23, 42, 0.6);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 28px;
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.6);
+}
+
+.aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.aurora span {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  max-width: 600px;
+  max-height: 600px;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.45;
+}
+.aurora-a {
+  background: radial-gradient(circle, #10b981, transparent 70%);
+  top: -20%;
+  right: -25%;
+  animation: drift-a 16s ease-in-out infinite alternate;
+}
+.aurora-b {
+  background: radial-gradient(circle, #0ea5e9, transparent 70%);
+  bottom: -25%;
+  left: -30%;
+  animation: drift-b 20s ease-in-out infinite alternate;
+}
+.aurora-c {
+  background: radial-gradient(circle, #8b5cf6, transparent 70%);
+  top: 35%;
+  right: -35%;
+  opacity: 0.25;
+  animation: drift-a 24s ease-in-out infinite alternate-reverse;
+}
+@keyframes drift-a {
+  to {
+    transform: translate(-12%, 14%) scale(1.15);
+  }
+}
+@keyframes drift-b {
+  to {
+    transform: translate(14%, -10%) scale(1.1);
+  }
+}
+
+.animate-rise {
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+/* ---------- אנימציית המשפחה ---------- */
+.hero-card {
+  animation: card-float 6s ease-in-out infinite;
+}
+@keyframes card-float {
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.hero-bob {
+  animation: bob 2.4s ease-in-out infinite;
+}
+@keyframes bob {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+.hero-wave {
+  transform-box: fill-box;
+  transform-origin: 50% 5%;
+  animation: wave 1.6s ease-in-out infinite;
+}
+@keyframes wave {
+  50% {
+    transform: rotate(-35deg);
+  }
+}
+.hero-chip,
+.hero-bar {
+  transform-box: view-box;
+  opacity: 0;
+}
+.hero-bar {
+  transform-box: fill-box;
+  transform-origin: 0 50%;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora span,
+  .animate-rise,
+  .hero-card,
+  .hero-bob,
+  .hero-wave,
+  .hero-seg,
+  .hero-bar,
+  .hero-chip {
+    animation: none !important;
+  }
+  .hero-bar {
+    transform: scaleX(1);
+  }
 }
 
 .btn {

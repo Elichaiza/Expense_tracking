@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import Aurora from '../components/Aurora'
 
 export default function Onboarding({ onDone }: { onDone: () => void }) {
   const [mode, setMode] = useState<'create' | 'join'>('create')
@@ -23,8 +24,13 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="min-h-full flex flex-col justify-center px-6 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-6">ברוכים הבאים 👋</h1>
+    <Aurora>
+    <div className="min-h-full flex flex-col justify-center px-5 max-w-md mx-auto">
+      <h1 className="text-3xl font-extrabold mb-1 bg-gradient-to-l from-emerald-300 to-sky-300 bg-clip-text text-transparent animate-rise">
+        ברוכים הבאים 👋
+      </h1>
+      <p className="text-slate-400 text-sm mb-6 animate-rise">עוד רגע מתחילים לעקוב אחרי ההוצאות</p>
+      <div className="glass p-5 animate-rise" style={{ animationDelay: '.1s' }}>
       <div className="grid grid-cols-2 gap-2 mb-5">
         <button
           className={mode === 'create' ? 'btn' : 'btn-ghost'}
@@ -62,14 +68,16 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
             required
           />
         )}
-        <button className="btn w-full" disabled={busy}>
+        <button className="btn-primary w-full" disabled={busy}>
           {mode === 'create' ? 'יצירה' : 'הצטרפות'}
         </button>
         {msg && <p className="text-amber-300 text-sm">{msg}</p>}
       </form>
+      </div>
       <button className="mt-6 text-slate-400 underline" onClick={() => supabase.auth.signOut()}>
         התנתקות
       </button>
     </div>
+    </Aurora>
   )
 }
