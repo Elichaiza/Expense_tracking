@@ -1,5 +1,8 @@
-export type Category = { id: string; name: string; icon: string }
+export type Kind = 'expense' | 'income'
 
+export type Category = { id: string; name: string; icon: string; kind: Kind }
+
+// הכנסות והוצאות נשמרות באותה טבלה ומובדלות לפי kind
 export type Expense = {
   id: string
   user_id: string
@@ -9,6 +12,7 @@ export type Expense = {
   category_id: string | null
   spent_at: string
   recurring_id: string | null
+  kind: Kind
 }
 
 export type Recurring = {
@@ -17,6 +21,7 @@ export type Recurring = {
   title: string
   category_id: string | null
   day_of_month: number
+  kind: Kind
 }
 
 export type Household = { id: string; name: string; invite_code: string }

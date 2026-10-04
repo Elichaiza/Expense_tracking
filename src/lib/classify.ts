@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Category } from './types'
+import type { Category, Kind } from './types'
 
 const AUTO_THRESHOLD = 0.6 // מתחת לזה ההוצאה נשארת ללא קטגוריה
 const SAVE_RULE_THRESHOLD = 0.8 // מעל זה הסיווג נשמר ככלל ולא ישאל שוב את ה-AI
@@ -27,7 +27,8 @@ export async function saveRule(householdId: string, title: string, categoryId: s
 export async function autoCategory(
   householdId: string,
   title: string,
-  categories: Category[],
+  categories: Category[], // רק הקטגוריות של הסוג הנוכחי (הוצאה/הכנסה)
+  kind: Kind,
 ): Promise<string | null> {
   const merchant = normalizeMerchant(title)
   if (!merchant) return null
@@ -44,9 +45,11 @@ export async function autoCategory(
   // 2. שאלה ל-AI. כל כשל (רשת, מכסה וכו') פשוט משאיר ללא קטגוריה
   try {
     const { data, error } = await supabase.functions.invoke('classify-expense', {
-      body: { household_id: householdId, title },
+      body: { household_id: householdId, title, kind },
     })
     if (error || !data?.category_id || data.confidence < AUTO_THRESHOLD) return null
+    // הגנה: התשובה חייבת להיות קטגוריה מהסוג הנכון
+    if (!categories.some((c) => c.id === data.category_id)) return null
     if (data.confidence >= SAVE_RULE_THRESHOLD) await saveRule(householdId, title, data.category_id)
     return data.category_id
   } catch {

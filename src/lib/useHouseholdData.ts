@@ -13,15 +13,15 @@ export function useHouseholdData(householdId: string) {
     const [e, c, m, r] = await Promise.all([
       supabase
         .from('expenses')
-        .select('id,user_id,amount,title,merchant,category_id,spent_at,recurring_id')
+        .select('id,user_id,amount,title,merchant,category_id,spent_at,recurring_id,kind')
         .eq('household_id', householdId)
         .order('spent_at', { ascending: false })
         .order('created_at', { ascending: false }),
-      supabase.from('categories').select('id,name,icon').eq('household_id', householdId).order('name'),
+      supabase.from('categories').select('id,name,icon,kind').eq('household_id', householdId).order('name'),
       supabase.from('household_members').select('user_id,display_name').eq('household_id', householdId),
       supabase
         .from('recurring_expenses')
-        .select('id,amount,title,category_id,day_of_month')
+        .select('id,amount,title,category_id,day_of_month,kind')
         .eq('household_id', householdId)
         .eq('active', true)
         .order('day_of_month'),

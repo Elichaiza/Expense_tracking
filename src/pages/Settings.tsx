@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatMoney } from '../lib/format'
-import type { Category, Household, Recurring } from '../lib/types'
+import type { Category, Household, Kind, Recurring } from '../lib/types'
 import BiometricToggle from '../components/BiometricToggle'
 
 type Props = {
@@ -11,9 +11,12 @@ type Props = {
   onChanged: () => void
 }
 
+const KIND_LABEL: Record<Kind, string> = { expense: 'הוצאות', income: 'הכנסות' }
+
 export default function Settings({ household, categories, recurring, onChanged }: Props) {
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('🏷️')
+  const [catKind, setCatKind] = useState<Kind>('expense')
   const [copied, setCopied] = useState(false)
 
   async function copyCode() {
@@ -29,21 +32,24 @@ export default function Settings({ household, categories, recurring, onChanged }
   async function addCategory(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
-    await supabase
-      .from('categories')
-      .insert({ household_id: household.id, name: name.trim(), icon: icon || '🏷️' })
+    await supabase.from('categories').insert({
+      household_id: household.id,
+      name: name.trim(),
+      icon: icon || '🏷️',
+      kind: catKind,
+    })
     setName('')
     onChanged()
   }
 
   async function stopRecurring(r: Recurring) {
-    if (!confirm(`לעצור את "${r.title}"? הוצאות שכבר נוספו יישארו.`)) return
+    if (!confirm(`לעצור את "${r.title}"? מה שכבר נוסף יישאר.`)) return
     await supabase.from('recurring_expenses').delete().eq('id', r.id)
     onChanged()
   }
 
   async function removeCategory(c: Category) {
-    if (!confirm(`למחוק את הקטגוריה "${c.name}"? הוצאות קיימות יישארו ללא קטגוריה.`)) return
+    if (!confirm(`למחוק את הקטגוריה "${c.name}"? פריטים קיימים יישארו ללא קטגוריה.`)) return
     await supabase.from('categories').delete().eq('id', c.id)
     onChanged()
   }
@@ -63,10 +69,10 @@ export default function Settings({ household, categories, recurring, onChanged }
       <BiometricToggle variant="settings" />
 
       <section>
-        <h2 className="font-bold mb-2">הוצאות קבועות</h2>
+        <h2 className="font-bold mb-2">קבועות (כל חודש)</h2>
         {recurring.length === 0 ? (
           <p className="text-sm text-slate-400">
-            אין הוצאות קבועות. כדי להוסיף, סמן "הוצאה קבועה כל חודש" בהוספת הוצאה.
+            אין הוצאות או הכנסות קבועות. כדי להוסיף, סמן "קבועה כל חודש" בטופס ההוספה.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -77,12 +83,17 @@ export default function Settings({ household, categories, recurring, onChanged }
                   <span className="text-xl">{cat?.icon ?? '🔁'}</span>
                   <div className="flex-1 min-w-0">
                     <div className="truncate">{r.title}</div>
-                    <div className="text-xs text-slate-400">ב-{r.day_of_month} בכל חודש</div>
+                    <div className="text-xs text-slate-400">
+                      {r.kind === 'income' ? 'הכנסה' : 'הוצאה'} · ב-{r.day_of_month} בכל חודש
+                    </div>
                   </div>
-                  <span className="font-semibold">{formatMoney(r.amount)}</span>
+                  <span className={`font-semibold ${r.kind === 'income' ? 'text-emerald-400' : ''}`}>
+                    {r.kind === 'income' ? '+' : ''}
+                    {formatMoney(r.amount)}
+                  </span>
                   <button
                     className="text-slate-500 px-1"
-                    aria-label="עצירת הוצאה קבועה"
+                    aria-label="עצירה"
                     onClick={() => stopRecurring(r)}
                   >
                     ✕
@@ -96,6 +107,18 @@ export default function Settings({ household, categories, recurring, onChanged }
 
       <section>
         <h2 className="font-bold mb-2">קטגוריות</h2>
+        <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-800 text-sm font-semibold mb-3">
+          {(['expense', 'income'] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setCatKind(k)}
+              className={`py-2 rounded-xl transition ${catKind === k ? 'bg-slate-600 text-white' : 'text-slate-400'}`}
+            >
+              {KIND_LABEL[k]}
+            </button>
+          ))}
+        </div>
         <form onSubmit={addCategory} className="flex gap-2 mb-3">
           <input
             className="field !w-16 text-center"
@@ -105,22 +128,24 @@ export default function Settings({ household, categories, recurring, onChanged }
           />
           <input
             className="field"
-            placeholder="קטגוריה חדשה"
+            placeholder={`קטגוריה חדשה ל${KIND_LABEL[catKind]}`}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <button className="btn">+</button>
         </form>
         <ul className="space-y-2">
-          {categories.map((c) => (
-            <li key={c.id} className="flex items-center gap-3 bg-slate-800/60 rounded-2xl p-3">
-              <span className="text-xl">{c.icon}</span>
-              <span className="flex-1">{c.name}</span>
-              <button className="text-slate-500 px-1" onClick={() => removeCategory(c)}>
-                ✕
-              </button>
-            </li>
-          ))}
+          {categories
+            .filter((c) => c.kind === catKind)
+            .map((c) => (
+              <li key={c.id} className="flex items-center gap-3 bg-slate-800/60 rounded-2xl p-3">
+                <span className="text-xl">{c.icon}</span>
+                <span className="flex-1">{c.name}</span>
+                <button className="text-slate-500 px-1" onClick={() => removeCategory(c)}>
+                  ✕
+                </button>
+              </li>
+            ))}
         </ul>
       </section>
 
