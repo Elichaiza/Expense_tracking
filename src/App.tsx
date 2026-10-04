@@ -33,6 +33,7 @@ function Main({ household }: { household: Household }) {
           <p className="text-center text-slate-400 mt-16">טוען…</p>
         ) : tab === 'expenses' ? (
           <Expenses
+            householdId={household.id}
             expenses={expenses}
             categories={categories}
             members={members}

@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { todayIso } from '../lib/format'
+import { autoCategory, saveRule } from '../lib/classify'
 import type { Category } from '../lib/types'
+
+const NONE = '__none'
 
 type Props = {
   householdId: string
@@ -22,12 +25,19 @@ export default function AddExpense({ householdId, categories, onClose, onSaved }
     e.preventDefault()
     setBusy(true)
     setMsg('')
+    const name = title.trim()
+    let finalCategory: string | null = null
+    if (categoryId === '') finalCategory = await autoCategory(householdId, name, categories)
+    else if (categoryId !== NONE) {
+      finalCategory = categoryId
+      await saveRule(householdId, name, categoryId) // בחירה ידנית נלמדת לפעם הבאה
+    }
     const { error } = await supabase.from('expenses').insert({
       household_id: householdId,
       amount: Number(amount),
-      title: title.trim(),
-      merchant: title.trim(),
-      category_id: categoryId || null,
+      title: name,
+      merchant: name,
+      category_id: finalCategory,
       spent_at: date,
     })
     setBusy(false)
@@ -64,7 +74,8 @@ export default function AddExpense({ householdId, categories, onClose, onSaved }
           required
         />
         <select className="field" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-          <option value="">ללא קטגוריה</option>
+          <option value="">🤖 סיווג אוטומטי</option>
+          <option value={NONE}>ללא קטגוריה</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.icon} {c.name}
@@ -80,7 +91,7 @@ export default function AddExpense({ householdId, categories, onClose, onSaved }
         />
         <div className="grid grid-cols-3 gap-2">
           <button className="btn col-span-2" disabled={busy}>
-            שמירה
+            {busy ? 'שומר…' : 'שמירה'}
           </button>
           <button type="button" className="btn-ghost" onClick={onClose}>
             ביטול
