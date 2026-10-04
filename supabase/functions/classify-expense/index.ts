@@ -39,7 +39,11 @@ Deno.serve(async (req) => {
 
     const apiKey = Deno.env.get('GEMINI_API_KEY')
     if (!apiKey) return json({ error: 'GEMINI_API_KEY is not set' }, 500)
-    const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-3.5-flash-lite'
+    // מנקה תווים בלתי נראים/רווחים שנכנסים בהעתקה (במיוחד מטקסט RTL)
+    const model =
+      (Deno.env.get('GEMINI_MODEL') ?? '')
+        .replace(/^models\//, '')
+        .replace(/[^a-zA-Z0-9._-]/g, '') || 'gemini-3.5-flash-lite'
 
     const names = categories.map((c) => c.name)
     const res = await fetch(
