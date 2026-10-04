@@ -1,7 +1,7 @@
 // Supabase Edge Function: מסווגת הוצאה לקטגוריה בעזרת Gemini.
 // Secrets נדרשים (Edge Functions -> Secrets):
 //   GEMINI_API_KEY  (חובה)
-//   GEMINI_MODEL    (אופציונלי, ברירת מחדל gemini-2.5-flash-lite)
+//   GEMINI_MODEL    (אופציונלי, ברירת מחדל gemini-3.5-flash-lite)
 // SUPABASE_URL ו-SUPABASE_ANON_KEY מוזרקים אוטומטית.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
 
     const apiKey = Deno.env.get('GEMINI_API_KEY')
     if (!apiKey) return json({ error: 'GEMINI_API_KEY is not set' }, 500)
-    const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-2.5-flash-lite'
+    const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-3.5-flash-lite'
 
     const names = categories.map((c) => c.name)
     const res = await fetch(
