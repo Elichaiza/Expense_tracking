@@ -3,39 +3,36 @@ import { supabase } from '../lib/supabase'
 import { todayIso } from '../lib/format'
 import { autoCategory, saveRule } from '../lib/classify'
 import type { Category, Kind } from '../lib/types'
+import { Segmented } from './ui'
 
+const AUTO = ''
 const NONE = '__none'
 
 const TEXT = {
-  expense: {
-    heading: 'הוצאה חדשה',
-    title: 'כותרת / שם החנות',
-    recurring: 'הוצאה קבועה כל חודש',
-  },
-  income: {
-    heading: 'הכנסה חדשה',
-    title: 'מקור ההכנסה (למשל: משכורת)',
-    recurring: 'הכנסה קבועה כל חודש',
-  },
+  expense: { title: 'כותרת / שם החנות', recurring: 'הוצאה קבועה כל חודש' },
+  income: { title: 'מקור ההכנסה (למשל: משכורת)', recurring: 'הכנסה קבועה כל חודש' },
 } as const
 
 type Props = {
-  kind: Kind
+  initialKind: Kind
   householdId: string
-  categories: Category[] // רק הקטגוריות של הסוג הזה
+  categories: Category[] // כל הקטגוריות. הטופס מסנן לפי הסוג שנבחר
   onClose: () => void
   onSaved: () => void
 }
 
-export default function AddTransaction({ kind, householdId, categories, onClose, onSaved }: Props) {
-  const t = TEXT[kind]
+export default function AddTransaction({ initialKind, householdId, categories, onClose, onSaved }: Props) {
+  const [kind, setKind] = useState<Kind>(initialKind)
   const [amount, setAmount] = useState('')
   const [title, setTitle] = useState('')
-  const [categoryId, setCategoryId] = useState('')
+  const [categoryId, setCategoryId] = useState(AUTO)
   const [date, setDate] = useState(todayIso())
   const [recurring, setRecurring] = useState(false) // ברירת מחדל: חד-פעמית
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+
+  const t = TEXT[kind]
+  const list = categories.filter((c) => c.kind === kind)
 
   async function save(e: React.FormEvent) {
     e.preventDefault()
@@ -43,7 +40,7 @@ export default function AddTransaction({ kind, householdId, categories, onClose,
     setMsg('')
     const name = title.trim()
     let finalCategory: string | null = null
-    if (categoryId === '') finalCategory = await autoCategory(householdId, name, categories, kind)
+    if (categoryId === AUTO) finalCategory = await autoCategory(householdId, name, list, kind)
     else if (categoryId !== NONE) {
       finalCategory = categoryId
       await saveRule(householdId, name, categoryId) // בחירה ידנית נלמדת לפעם הבאה
@@ -72,26 +69,48 @@ export default function AddTransaction({ kind, householdId, categories, onClose,
     onClose()
   }
 
+  const chip = (active: boolean) =>
+    `shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition ${
+      active ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 active:bg-slate-200'
+    }`
+
   return (
-    <div className="fixed inset-0 z-20 bg-black/60 flex items-end" onClick={onClose}>
+    <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm flex items-end" onClick={onClose}>
       <form
         onSubmit={save}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md mx-auto bg-slate-900 rounded-t-3xl p-5 space-y-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+        className="sheet-up w-full max-w-md mx-auto bg-white rounded-t-[2rem] p-5 space-y-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[92vh] overflow-y-auto"
       >
-        <h2 className="text-xl font-bold">{t.heading}</h2>
-        <input
-          className="field text-2xl"
-          type="number"
-          inputMode="decimal"
-          step="0.01"
-          min="0"
-          placeholder="סכום ₪"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          autoFocus
-          required
+        <div className="w-10 h-1.5 rounded-full bg-slate-200 mx-auto -mt-1" />
+
+        <Segmented
+          value={kind}
+          onChange={(k) => {
+            setKind(k)
+            setCategoryId(AUTO)
+          }}
+          options={[
+            { value: 'expense', label: 'הוצאה' },
+            { value: 'income', label: 'הכנסה' },
+          ]}
         />
+
+        <div className="relative">
+          <span className="absolute top-1/2 -translate-y-1/2 start-5 text-3xl font-bold text-slate-300">₪</span>
+          <input
+            className="field !text-4xl !font-extrabold !py-4 !ps-14 tracking-tight"
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0"
+            placeholder="0"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            autoFocus
+            required
+          />
+        </div>
+
         <input
           className="field"
           placeholder={t.title}
@@ -99,40 +118,50 @@ export default function AddTransaction({ kind, householdId, categories, onClose,
           onChange={(e) => setTitle(e.target.value)}
           required
         />
-        <select className="field" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-          <option value="">🤖 סיווג אוטומטי</option>
-          <option value={NONE}>ללא קטגוריה</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.icon} {c.name}
-            </option>
-          ))}
-        </select>
-        <input
-          className="field"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-        />
-        <label className="flex items-center gap-3 select-none cursor-pointer py-1">
+
+        <div>
+          <div className="text-xs font-semibold text-slate-500 mb-2">קטגוריה</div>
+          <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-5 px-5 pb-1">
+            <button type="button" className={chip(categoryId === AUTO)} onClick={() => setCategoryId(AUTO)}>
+              🤖 אוטומטי
+            </button>
+            {list.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className={chip(categoryId === c.id)}
+                onClick={() => setCategoryId(c.id)}
+              >
+                {c.icon} {c.name}
+              </button>
+            ))}
+            <button type="button" className={chip(categoryId === NONE)} onClick={() => setCategoryId(NONE)}>
+              ללא
+            </button>
+          </div>
+        </div>
+
+        <input className="field" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+
+        <label className="flex items-center gap-3 select-none cursor-pointer">
           <input
             type="checkbox"
             className="peer sr-only"
             checked={recurring}
             onChange={(e) => setRecurring(e.target.checked)}
           />
-          <span className="w-6 h-6 shrink-0 rounded-md border-2 border-slate-600 grid place-items-center text-sm font-bold text-slate-950 peer-checked:bg-emerald-400 peer-checked:border-emerald-400 peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-300">
+          <span className="w-6 h-6 shrink-0 rounded-md border-2 border-slate-300 grid place-items-center text-sm font-bold text-white peer-checked:bg-emerald-500 peer-checked:border-emerald-500 peer-focus-visible:ring-4 peer-focus-visible:ring-emerald-500/20">
             {recurring && '✓'}
           </span>
-          <span className="text-slate-200">🔁 {t.recurring}</span>
+          <span className="text-slate-700">🔁 {t.recurring}</span>
         </label>
         {recurring && (
-          <p className="text-xs text-slate-400 -mt-1">
+          <p className="text-xs text-slate-500 -mt-2">
             תתווסף אוטומטית ב-{Number(date.slice(8, 10)) || ''} בכל חודש, החל מהתאריך שנבחר.
           </p>
         )}
-        <div className="grid grid-cols-3 gap-2">
+
+        <div className="grid grid-cols-3 gap-2 pt-1">
           <button className="btn col-span-2" disabled={busy}>
             {busy ? 'שומר…' : 'שמירה'}
           </button>
@@ -140,7 +169,7 @@ export default function AddTransaction({ kind, householdId, categories, onClose,
             ביטול
           </button>
         </div>
-        {msg && <p className="text-amber-300 text-sm">{msg}</p>}
+        {msg && <p className="text-rose-600 text-sm">{msg}</p>}
       </form>
     </div>
   )

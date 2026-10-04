@@ -1,6 +1,6 @@
 export type Kind = 'expense' | 'income'
 
-export type Category = { id: string; name: string; icon: string; kind: Kind }
+export type Category = { id: string; name: string; icon: string; kind: Kind; created_at?: string }
 
 // הכנסות והוצאות נשמרות באותה טבלה ומובדלות לפי kind
 export type Expense = {

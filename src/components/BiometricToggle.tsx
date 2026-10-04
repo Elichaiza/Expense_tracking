@@ -33,18 +33,16 @@ export default function BiometricToggle({ variant }: { variant: 'offer' | 'setti
 
   if (!supported) {
     return variant === 'settings' ? (
-      <p className="text-sm text-slate-400">
-        המכשיר או הדפדפן הזה לא תומכים בנעילה ביומטרית.
-      </p>
+      <p className="text-sm text-slate-500 px-1">המכשיר או הדפדפן הזה לא תומכים בנעילה ביומטרית.</p>
     ) : null
   }
 
   if (variant === 'offer') {
     if (on || hidden) return null
     return (
-      <div className="mx-4 mb-3 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 p-3">
-        <p className="text-sm font-semibold">🔐 להפעיל כניסה מהירה עם Face ID / טביעת אצבע?</p>
-        <p className="text-xs text-slate-400 mt-1">בפתיחה הבאה לא תצטרך להקליד כלום.</p>
+      <div className="mb-4 rounded-3xl bg-emerald-50 ring-1 ring-emerald-200 p-4">
+        <p className="text-sm font-semibold text-emerald-900">🔐 להפעיל כניסה מהירה עם Face ID / טביעת אצבע?</p>
+        <p className="text-xs text-emerald-800/70 mt-1">בפתיחה הבאה לא תצטרך להקליד כלום.</p>
         <div className="flex gap-2 mt-3">
           <button className="btn !py-2 flex-1" disabled={busy} onClick={turnOn}>
             הפעל
@@ -59,15 +57,15 @@ export default function BiometricToggle({ variant }: { variant: 'offer' | 'setti
             לא עכשיו
           </button>
         </div>
-        {msg && <p className="text-amber-300 text-xs mt-2">{msg}</p>}
+        {msg && <p className="text-rose-600 text-xs mt-2">{msg}</p>}
       </div>
     )
   }
 
   return (
-    <section className="bg-slate-800/60 rounded-2xl p-4">
-      <h2 className="font-bold mb-1">נעילה ב-Face ID / טביעת אצבע</h2>
-      <p className="text-sm text-slate-400 mb-3">
+    <section className="card p-4">
+      <h2 className="font-bold mb-1">🔐 נעילה ב-Face ID / טביעת אצבע</h2>
+      <p className="text-sm text-slate-500 mb-3">
         {on
           ? 'מופעל במכשיר הזה. האפליקציה תיפתח רק אחרי אימות.'
           : 'פתיחה מהירה בלי להקליד סיסמה. ההגדרה נשמרת לכל מכשיר בנפרד.'}
@@ -81,7 +79,7 @@ export default function BiometricToggle({ variant }: { variant: 'offer' | 'setti
           הפעלה
         </button>
       )}
-      {msg && <p className="text-amber-300 text-xs mt-2">{msg}</p>}
+      {msg && <p className="text-rose-600 text-xs mt-2">{msg}</p>}
     </section>
   )
 }

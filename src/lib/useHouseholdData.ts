@@ -17,7 +17,7 @@ export function useHouseholdData(householdId: string) {
         .eq('household_id', householdId)
         .order('spent_at', { ascending: false })
         .order('created_at', { ascending: false }),
-      supabase.from('categories').select('id,name,icon,kind').eq('household_id', householdId).order('name'),
+      supabase.from('categories').select('id,name,icon,kind,created_at').eq('household_id', householdId).order('name'),
       supabase.from('household_members').select('user_id,display_name').eq('household_id', householdId),
       supabase
         .from('recurring_expenses')

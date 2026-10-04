@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -12,8 +12,8 @@ body,
 
 body {
   margin: 0;
-  background: #0f172a;
-  color: #f1f5f9;
+  background: #f1f5f9;
+  color: #0f172a;
   font-family: 'Heebo', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Hebrew', sans-serif;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
@@ -26,7 +26,7 @@ button {
 }
 
 .field {
-  @apply w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-base text-slate-100 outline-none focus:border-emerald-400;
+  @apply w-full rounded-2xl bg-white border border-slate-200 px-4 py-3 text-base text-slate-900 placeholder-slate-400 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15;
 }
 
 .btn-primary {
@@ -167,9 +167,41 @@ button {
 }
 
 .btn {
-  @apply rounded-xl bg-emerald-500 text-slate-950 font-semibold px-4 py-3 text-base active:bg-emerald-400 disabled:opacity-50;
+  @apply rounded-2xl bg-gradient-to-l from-emerald-500 to-teal-500 text-white font-semibold px-4 py-3 text-base shadow-md shadow-emerald-500/25 transition active:scale-[.98] disabled:opacity-60;
 }
 
 .btn-ghost {
-  @apply rounded-xl bg-slate-800 text-slate-100 px-4 py-3 text-base active:bg-slate-700;
+  @apply rounded-2xl bg-white border border-slate-200 text-slate-700 font-medium px-4 py-3 text-base transition active:bg-slate-50;
+}
+
+/* ---------- כרטיסים וכלים כלליים ---------- */
+.card {
+  @apply bg-white rounded-3xl ring-1 ring-slate-900/5;
+  box-shadow: 0 10px 30px -14px rgba(15, 23, 42, 0.14), 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.sheet-up {
+  animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+
+/* ��� ��� �����/����� ����� ���� */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }

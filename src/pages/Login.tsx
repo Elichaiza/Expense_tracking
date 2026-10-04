@@ -72,7 +72,7 @@ export default function Login() {
               ✉️
             </span>
             <input
-              className="field-light ps-12"
+              className="field-light !ps-12"
               type="email"
               id="email"
               name="email"
@@ -90,7 +90,7 @@ export default function Login() {
               🔒
             </span>
             <input
-              className="field-light ps-12 pe-12"
+              className="field-light !ps-12 !pe-12"
               id="password"
               name="password"
               type={show ? 'text' : 'password'}

@@ -1,19 +1,24 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { formatMoney } from '../lib/format'
-import type { Category, Household, Kind, Recurring } from '../lib/types'
+import { formatMoney, formatMoneySigned } from '../lib/format'
+import { exportCsv } from '../lib/export'
+import type { Category, Expense, Household, Kind, Recurring } from '../lib/types'
 import BiometricToggle from '../components/BiometricToggle'
+import { Section, Segmented } from '../components/ui'
+import { IconClose, IconDownload } from '../components/Icons'
 
 type Props = {
   household: Household
   categories: Category[]
   recurring: Recurring[]
+  items: Expense[]
+  members: Record<string, string>
   onChanged: () => void
 }
 
 const KIND_LABEL: Record<Kind, string> = { expense: 'הוצאות', income: 'הכנסות' }
 
-export default function Settings({ household, categories, recurring, onChanged }: Props) {
+export default function Settings({ household, categories, recurring, items, members, onChanged }: Props) {
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('🏷️')
   const [catKind, setCatKind] = useState<Kind>('expense')
@@ -55,10 +60,10 @@ export default function Settings({ household, categories, recurring, onChanged }
   }
 
   return (
-    <div className="space-y-6">
-      <section className="bg-slate-800/60 rounded-2xl p-4">
-        <h2 className="font-bold mb-1">הזמנת בן משפחה</h2>
-        <p className="text-sm text-slate-400 mb-3">
+    <div className="space-y-6 -mt-3">
+      <section className="card p-4">
+        <h2 className="font-bold mb-1">👨‍👩‍👧 הזמנת בן משפחה</h2>
+        <p className="text-sm text-slate-500 mb-3">
           בן המשפחה נרשם לאפליקציה ובוחר "יש לי קוד הזמנה":
         </p>
         <button className="btn-ghost w-full font-mono text-xl" dir="ltr" onClick={copyCode}>
@@ -68,58 +73,53 @@ export default function Settings({ household, categories, recurring, onChanged }
 
       <BiometricToggle variant="settings" />
 
-      <section>
-        <h2 className="font-bold mb-2">קבועות (כל חודש)</h2>
+      <Section title="קבועות (כל חודש)">
         {recurring.length === 0 ? (
-          <p className="text-sm text-slate-400">
-            אין הוצאות או הכנסות קבועות. כדי להוסיף, סמן "קבועה כל חודש" בטופס ההוספה.
-          </p>
+          <div className="card p-4 text-sm text-slate-500">
+            אין הוצאות או הכנסות קבועות. כדי להוסיף, סמנו "קבועה כל חודש" בטופס ההוספה.
+          </div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="card divide-y divide-slate-100">
             {recurring.map((r) => {
               const cat = categories.find((c) => c.id === r.category_id)
               return (
-                <li key={r.id} className="flex items-center gap-3 bg-slate-800/60 rounded-2xl p-3">
-                  <span className="text-xl">{cat?.icon ?? '🔁'}</span>
+                <li key={r.id} className="flex items-center gap-3 p-3">
+                  <span className="w-10 h-10 rounded-2xl bg-slate-100 grid place-items-center text-xl">
+                    {cat?.icon ?? '🔁'}
+                  </span>
                   <div className="flex-1 min-w-0">
-                    <div className="truncate">{r.title}</div>
-                    <div className="text-xs text-slate-400">
+                    <div className="truncate font-medium">{r.title}</div>
+                    <div className="text-xs text-slate-500">
                       {r.kind === 'income' ? 'הכנסה' : 'הוצאה'} · ב-{r.day_of_month} בכל חודש
                     </div>
                   </div>
-                  <span className={`font-semibold ${r.kind === 'income' ? 'text-emerald-400' : ''}`}>
-                    {r.kind === 'income' ? '+' : ''}
-                    {formatMoney(r.amount)}
+                  <span className="font-semibold" style={r.kind === 'income' ? { color: '#047857' } : undefined}>
+                    {r.kind === 'income' ? formatMoneySigned(r.amount) : formatMoney(r.amount)}
                   </span>
                   <button
-                    className="text-slate-500 px-1"
+                    className="text-slate-300 active:text-rose-500 p-1"
                     aria-label="עצירה"
                     onClick={() => stopRecurring(r)}
                   >
-                    ✕
+                    <IconClose className="w-4 h-4" />
                   </button>
                 </li>
               )
             })}
           </ul>
         )}
-      </section>
+      </Section>
 
-      <section>
-        <h2 className="font-bold mb-2">קטגוריות</h2>
-        <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-800 text-sm font-semibold mb-3">
-          {(['expense', 'income'] as const).map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setCatKind(k)}
-              className={`py-2 rounded-xl transition ${catKind === k ? 'bg-slate-600 text-white' : 'text-slate-400'}`}
-            >
-              {KIND_LABEL[k]}
-            </button>
-          ))}
-        </div>
-        <form onSubmit={addCategory} className="flex gap-2 mb-3">
+      <Section title="קטגוריות">
+        <Segmented
+          value={catKind}
+          onChange={setCatKind}
+          options={[
+            { value: 'expense', label: KIND_LABEL.expense },
+            { value: 'income', label: KIND_LABEL.income },
+          ]}
+        />
+        <form onSubmit={addCategory} className="flex gap-2">
           <input
             className="field !w-16 text-center"
             value={icon}
@@ -132,27 +132,40 @@ export default function Settings({ household, categories, recurring, onChanged }
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-          <button className="btn">+</button>
+          <button className="btn px-5">+</button>
         </form>
-        <ul className="space-y-2">
+        <ul className="card divide-y divide-slate-100">
           {categories
             .filter((c) => c.kind === catKind)
             .map((c) => (
-              <li key={c.id} className="flex items-center gap-3 bg-slate-800/60 rounded-2xl p-3">
-                <span className="text-xl">{c.icon}</span>
-                <span className="flex-1">{c.name}</span>
-                <button className="text-slate-500 px-1" onClick={() => removeCategory(c)}>
-                  ✕
+              <li key={c.id} className="flex items-center gap-3 p-3">
+                <span className="w-10 h-10 rounded-2xl bg-slate-100 grid place-items-center text-xl">{c.icon}</span>
+                <span className="flex-1 font-medium">{c.name}</span>
+                <button
+                  className="text-slate-300 active:text-rose-500 p-1"
+                  aria-label="מחיקת קטגוריה"
+                  onClick={() => removeCategory(c)}
+                >
+                  <IconClose className="w-4 h-4" />
                 </button>
               </li>
             ))}
         </ul>
-      </section>
+      </Section>
+
+      <Section title="נתונים">
+        <button
+          className="btn-ghost w-full flex items-center justify-center gap-2"
+          onClick={() => exportCsv(items, categories, members)}
+        >
+          <IconDownload className="w-5 h-5" /> ייצוא הכול ל-Excel (CSV)
+        </button>
+      </Section>
 
       <button className="btn-ghost w-full" onClick={() => supabase.auth.signOut()}>
         התנתקות
       </button>
-      <p className="text-center text-xs text-slate-500" dir="ltr">
+      <p className="text-center text-xs text-slate-400" dir="ltr">
         build {__BUILD_TIME__} UTC
       </p>
     </div>
