@@ -93,20 +93,20 @@ export default function Home({ items, categories, month, onAdd, onSeeAll }: Prop
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <StatTile label="הכנסות" value={formatMoney(stats.income)} mark={INCOME_COLOR}>
-          <Delta value={change(stats.income, prev.income)} upIsGood />
-        </StatTile>
-        <StatTile label="הוצאות" value={formatMoney(stats.expense)} mark={EXPENSE_COLOR}>
+        <StatTile tone="expense" label="הוצאות" value={formatMoney(stats.expense)} mark={EXPENSE_COLOR}>
           <Delta value={change(stats.expense, prev.expense)} upIsGood={false} />
+        </StatTile>
+        <StatTile tone="income" label="הכנסות" value={formatMoney(stats.income)} mark={INCOME_COLOR}>
+          <Delta value={change(stats.income, prev.income)} upIsGood />
         </StatTile>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <button className="btn flex items-center justify-center gap-2" onClick={() => onAdd('expense')}>
-          <IconPlus className="w-5 h-5" /> הוצאה
-        </button>
-        <button className="btn-ghost flex items-center justify-center gap-2" onClick={() => onAdd('income')}>
+        <button className="btn flex items-center justify-center gap-2" onClick={() => onAdd('income')}>
           <IconPlus className="w-5 h-5" /> הכנסה
+        </button>
+        <button className="btn-expense flex items-center justify-center gap-2" onClick={() => onAdd('expense')}>
+          <IconPlus className="w-5 h-5" /> הוצאה
         </button>
       </div>
 

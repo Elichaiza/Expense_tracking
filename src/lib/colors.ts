@@ -13,7 +13,9 @@ export const SERIES = [
 ]
 
 // הכנסות/הוצאות: שני צבעים קבועים בכל הגרפים
-export const EXPENSE_COLOR = SERIES[1]
+// הוצאות באדום בהיר, הכנסות בירוק. הזוג אומת מול עיוורי צבעים (טווח 6-8),
+// ולכן בגרפים יש תמיד גם מקרא, תוויות בטולטיפ, מרווח בין עמודות וטבלת נתונים.
+export const EXPENSE_COLOR = '#fb7185'
 export const INCOME_COLOR = SERIES[2]
 export const MUTED = '#94a3b8'
 export const MUTED_LIGHT = '#cbd5e1'

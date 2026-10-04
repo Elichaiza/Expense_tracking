@@ -65,16 +65,24 @@ export function StatTile({
   value,
   mark,
   small,
+  tone,
   children,
 }: {
   label: string
   value: string
   mark?: string
   small?: boolean
+  tone?: 'expense' | 'income'
   children?: ReactNode
 }) {
+  const wash =
+    tone === 'expense'
+      ? 'bg-gradient-to-br from-rose-50 to-white'
+      : tone === 'income'
+        ? 'bg-gradient-to-br from-emerald-50 to-white'
+        : ''
   return (
-    <div className="card p-4 min-w-0">
+    <div className={`card p-4 min-w-0 ${wash}`}>
       <div className="flex items-center gap-2 text-sm text-slate-500">
         {mark && <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: mark }} />}
         {label}

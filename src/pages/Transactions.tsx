@@ -65,7 +65,7 @@ export default function Transactions({ kind, householdId, items, categories, mem
 
   return (
     <div className="space-y-4 -mt-3">
-      <div className="card p-5">
+      <div className={`card p-5 bg-gradient-to-br to-white ${income ? 'from-emerald-50' : 'from-rose-50'}`}>
         <div className="text-sm text-slate-500">
           {t.total} · {monthLabel(month)}
         </div>

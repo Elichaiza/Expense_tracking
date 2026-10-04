@@ -162,7 +162,7 @@ export default function AddTransaction({ initialKind, householdId, categories, o
         )}
 
         <div className="grid grid-cols-3 gap-2 pt-1">
-          <button className="btn col-span-2" disabled={busy}>
+          <button className={`${kind === 'expense' ? 'btn-expense' : 'btn'} col-span-2`} disabled={busy}>
             {busy ? 'שומר…' : 'שמירה'}
           </button>
           <button type="button" className="btn-ghost" onClick={onClose}>

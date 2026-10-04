@@ -25,8 +25,8 @@ type Tab = 'home' | 'expenses' | 'income' | 'analysis' | 'settings'
 
 const TABS: { id: Tab; label: string; icon: (p: { className?: string }) => ReactNode }[] = [
   { id: 'home', label: 'בית', icon: IconHome },
-  { id: 'expenses', label: 'הוצאות', icon: IconExpense },
   { id: 'income', label: 'הכנסות', icon: IconIncome },
+  { id: 'expenses', label: 'הוצאות', icon: IconExpense },
   { id: 'analysis', label: 'ניתוח', icon: IconChart },
   { id: 'settings', label: 'הגדרות', icon: IconSettings },
 ]
@@ -37,6 +37,15 @@ const TITLES: Record<Tab, string> = {
   income: 'הכנסות',
   analysis: 'ניתוח',
   settings: 'הגדרות',
+}
+
+// כל לשונית צובעת את הכותרת בצבע שלה: הוצאות באדום בהיר, הכנסות בירוק
+const HEADER_GRADIENT: Record<Tab, string> = {
+  home: 'from-emerald-500 via-teal-500 to-sky-500',
+  income: 'from-emerald-500 via-emerald-400 to-teal-400',
+  expenses: 'from-rose-500 via-rose-400 to-rose-300',
+  analysis: 'from-emerald-500 via-teal-500 to-sky-500',
+  settings: 'from-emerald-500 via-teal-500 to-sky-500',
 }
 
 function greeting() {
@@ -66,9 +75,13 @@ function Main({ household }: { household: Household }) {
   return (
     <div className="min-h-full max-w-md mx-auto pb-32">
       {/* פס מאחורי שורת המצב של האייפון, כך שהטקסט הלבן שלה תמיד קריא */}
-      <div className="fixed top-0 inset-x-0 h-[env(safe-area-inset-top)] bg-emerald-500 z-30" />
+      <div
+        className={`fixed top-0 inset-x-0 h-[env(safe-area-inset-top)] z-30 ${tab === 'expenses' ? 'bg-rose-500' : 'bg-emerald-500'}`}
+      />
 
-      <header className="bg-gradient-to-bl from-emerald-500 via-teal-500 to-sky-500 text-white pt-[env(safe-area-inset-top)] rounded-b-[2rem] shadow-lg shadow-emerald-600/20">
+      <header
+        className={`bg-gradient-to-bl ${HEADER_GRADIENT[tab]} text-white pt-[env(safe-area-inset-top)] rounded-b-[2rem] shadow-lg ${tab === 'expenses' ? 'shadow-rose-500/20' : 'shadow-emerald-600/20'}`}
+      >
         <div className="px-5 pt-5 pb-7">
           <div className="flex items-start justify-between">
             <div>
@@ -128,7 +141,11 @@ function Main({ household }: { household: Household }) {
 
       {kind && (
         <button
-          className="fixed end-5 w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white grid place-items-center shadow-xl shadow-emerald-600/30 active:scale-95 transition z-20"
+          className={`fixed end-5 w-14 h-14 rounded-full bg-gradient-to-br text-white grid place-items-center shadow-xl active:scale-95 transition z-20 ${
+            kind === 'expense'
+              ? 'from-rose-300 to-rose-400 shadow-rose-400/30'
+              : 'from-emerald-400 to-teal-500 shadow-emerald-600/30'
+          }`}
           style={{ bottom: 'calc(6.25rem + env(safe-area-inset-bottom))' }}
           aria-label={kind === 'income' ? 'הוספת הכנסה' : 'הוספת הוצאה'}
           onClick={() => setAdding(kind)}
