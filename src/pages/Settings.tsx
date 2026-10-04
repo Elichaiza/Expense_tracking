@@ -84,6 +84,9 @@ export default function Settings({ household, categories, onChanged }: Props) {
       <button className="btn-ghost w-full" onClick={() => supabase.auth.signOut()}>
         התנתקות
       </button>
+      <p className="text-center text-xs text-slate-500" dir="ltr">
+        build {__BUILD_TIME__} UTC
+      </p>
     </div>
   )
 }
