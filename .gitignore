@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Supabase access token (never commit)
+.supabase-token
+supabase-token*
