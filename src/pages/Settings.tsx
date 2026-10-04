@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Category, Household } from '../lib/types'
+import BiometricToggle from '../components/BiometricToggle'
 
 type Props = {
   household: Household
@@ -50,6 +51,8 @@ export default function Settings({ household, categories, onChanged }: Props) {
           {household.invite_code} {copied ? '✓' : '📋'}
         </button>
       </section>
+
+      <BiometricToggle variant="settings" />
 
       <section>
         <h2 className="font-bold mb-2">קטגוריות</h2>

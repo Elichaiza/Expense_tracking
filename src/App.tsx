@@ -9,6 +9,11 @@ import Expenses from './pages/Expenses'
 import Summary from './pages/Summary'
 import Settings from './pages/Settings'
 import AddExpense from './components/AddExpense'
+import LockScreen from './components/LockScreen'
+import BiometricToggle from './components/BiometricToggle'
+import { disable, isEnabled } from './lib/biometric'
+
+const RELOCK_AFTER_MS = 60_000
 
 type Tab = 'expenses' | 'summary' | 'settings'
 
@@ -28,6 +33,7 @@ function Main({ household }: { household: Household }) {
       <header className="px-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-2 font-bold text-lg">
         {household.name}
       </header>
+      <BiometricToggle variant="offer" />
       <main className="flex-1 overflow-y-auto px-4 pb-28">
         {loading ? (
           <p className="text-center text-slate-400 mt-16">טוען…</p>
@@ -89,6 +95,7 @@ function Main({ household }: { household: Household }) {
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
   const [household, setHousehold] = useState<Household | null | undefined>(undefined)
+  const [locked, setLocked] = useState(isEnabled)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -110,9 +117,38 @@ export default function App() {
     else setHousehold(undefined)
   }, [session, loadHousehold])
 
-  if (session === undefined || (session && household === undefined))
-    return <p className="text-center text-slate-400 pt-24">טוען…</p>
+  // התנתקות מוחקת את הנעילה הביומטרית של המכשיר
+  useEffect(() => {
+    if (session === null) {
+      disable()
+      setLocked(false)
+    }
+  }, [session])
+
+  // חזרה לאפליקציה אחרי יותר מדקה ברקע נועלת אותה שוב
+  useEffect(() => {
+    let hiddenAt = 0
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') hiddenAt = Date.now()
+      else if (hiddenAt && isEnabled() && Date.now() - hiddenAt > RELOCK_AFTER_MS) setLocked(true)
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [])
+
+  if (session === undefined) return <p className="text-center text-slate-400 pt-24">טוען…</p>
   if (!session) return <Login />
+  if (locked)
+    return (
+      <LockScreen
+        onUnlock={() => setLocked(false)}
+        onUsePassword={() => {
+          disable()
+          supabase.auth.signOut()
+        }}
+      />
+    )
+  if (household === undefined) return <p className="text-center text-slate-400 pt-24">טוען…</p>
   if (!household) return <Onboarding onDone={loadHousehold} />
   return <Main household={household} />
 }

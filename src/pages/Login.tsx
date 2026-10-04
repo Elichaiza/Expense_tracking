@@ -74,9 +74,11 @@ export default function Login() {
             <input
               className="field-light ps-12"
               type="email"
+              id="email"
+              name="email"
               dir="ltr"
               placeholder="אימייל"
-              autoComplete="email"
+              autoComplete="username"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -89,6 +91,8 @@ export default function Login() {
             </span>
             <input
               className="field-light ps-12 pe-12"
+              id="password"
+              name="password"
               type={show ? 'text' : 'password'}
               dir="ltr"
               placeholder="סיסמה (לפחות 6 תווים)"
