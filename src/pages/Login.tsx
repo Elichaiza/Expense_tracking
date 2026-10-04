@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import Aurora from '../components/Aurora'
 import HeroAnimation from '../components/HeroAnimation'
+import TopBar from '../components/TopBar'
 
 const FEATURES = ['🤖 סיווג אוטומטי', '👨‍👩‍👧 משותף לכל המשפחה', '📱 מותקן כמו אפליקציה']
 
@@ -28,25 +29,19 @@ export default function Login() {
 
   return (
     <Aurora>
-      <div className="min-h-full max-w-md mx-auto px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex flex-col">
-        <div className="flex items-center gap-2 py-2 animate-rise">
-          <span className="grid place-items-center w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 text-slate-950 text-lg shadow-lg shadow-emerald-500/30">
-            ₪
-          </span>
-          <span className="font-bold tracking-tight">הוצאות המשפחה</span>
-        </div>
-
-        <div className="animate-rise" style={{ animationDelay: '.05s' }}>
+      <TopBar />
+      <div className="max-w-md mx-auto px-5 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex flex-col">
+        <div className="animate-rise">
           <HeroAnimation />
         </div>
 
         <div className="text-center mt-1 mb-5 animate-rise" style={{ animationDelay: '.12s' }}>
-          <h1 className="text-[1.75rem] leading-tight font-extrabold bg-gradient-to-l from-emerald-300 via-teal-200 to-sky-300 bg-clip-text text-transparent">
+          <h1 className="text-[1.75rem] leading-tight font-extrabold bg-gradient-to-l from-emerald-600 via-teal-500 to-sky-600 bg-clip-text text-transparent">
             כל הוצאות המשפחה,
             <br />
             במקום אחד
           </h1>
-          <p className="text-slate-400 text-sm mt-2">עוקבים, מסווגים ורואים לאן הכסף הולך</p>
+          <p className="text-slate-500 text-sm mt-2">עוקבים, מסווגים ורואים לאן הכסף הולך</p>
         </div>
 
         <form
@@ -54,7 +49,7 @@ export default function Login() {
           className="glass p-5 space-y-3 animate-rise"
           style={{ animationDelay: '.2s' }}
         >
-          <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-950/50 text-sm font-semibold">
+          <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-200/70 text-sm font-semibold">
             {(['in', 'up'] as const).map((m) => (
               <button
                 key={m}
@@ -64,7 +59,7 @@ export default function Login() {
                   setMsg('')
                 }}
                 className={`py-2 rounded-xl transition ${
-                  mode === m ? 'bg-slate-700/80 text-white shadow' : 'text-slate-400'
+                  mode === m ? 'bg-white text-slate-900 shadow' : 'text-slate-500'
                 }`}
               >
                 {m === 'in' ? 'כניסה' : 'הרשמה'}
@@ -73,11 +68,11 @@ export default function Login() {
           </div>
 
           <div className="relative">
-            <span className="absolute inset-y-0 start-4 grid place-items-center text-slate-500 pointer-events-none">
+            <span className="absolute inset-y-0 start-4 grid place-items-center text-slate-400 pointer-events-none">
               ✉️
             </span>
             <input
-              className="field ps-12"
+              className="field-light ps-12"
               type="email"
               dir="ltr"
               placeholder="אימייל"
@@ -89,11 +84,11 @@ export default function Login() {
           </div>
 
           <div className="relative">
-            <span className="absolute inset-y-0 start-4 grid place-items-center text-slate-500 pointer-events-none">
+            <span className="absolute inset-y-0 start-4 grid place-items-center text-slate-400 pointer-events-none">
               🔒
             </span>
             <input
-              className="field ps-12 pe-12"
+              className="field-light ps-12 pe-12"
               type={show ? 'text' : 'password'}
               dir="ltr"
               placeholder="סיסמה (לפחות 6 תווים)"
@@ -107,7 +102,7 @@ export default function Login() {
               type="button"
               aria-label={show ? 'הסתר סיסמה' : 'הצג סיסמה'}
               onClick={() => setShow(!show)}
-              className="absolute inset-y-0 end-3 px-1 grid place-items-center text-slate-400"
+              className="absolute inset-y-0 end-3 px-1 grid place-items-center text-slate-500"
             >
               {show ? '🙈' : '👁️'}
             </button>
@@ -116,7 +111,7 @@ export default function Login() {
           <button className="btn-primary w-full" disabled={busy}>
             {busy ? 'רגע…' : mode === 'in' ? 'כניסה' : 'יצירת משתמש'}
           </button>
-          {msg && <p className="text-amber-300 text-sm text-center">{msg}</p>}
+          {msg && <p className="text-red-600 text-sm text-center">{msg}</p>}
         </form>
 
         <div
@@ -126,7 +121,7 @@ export default function Login() {
           {FEATURES.map((f) => (
             <span
               key={f}
-              className="text-xs text-slate-300 bg-white/5 border border-white/10 rounded-full px-3 py-1.5"
+              className="text-xs text-slate-600 bg-white/70 border border-slate-200 rounded-full px-3 py-1.5"
             >
               {f}
             </span>

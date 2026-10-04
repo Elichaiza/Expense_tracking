@@ -63,7 +63,7 @@ function Counter() {
   }, [])
 
   return (
-    <text x={CX} y={CY + 4} textAnchor="middle" fill="#f8fafc" fontSize="13" fontWeight="800">
+    <text x={CX} y={CY + 4} textAnchor="middle" fill="#0f172a" fontSize="13" fontWeight="800">
       {fmt(value)}
     </text>
   )
@@ -89,7 +89,7 @@ function Person({ x, kid, shirt, hair, skin, long, wave, delay }: PersonProps) {
   const hy = top - r - 1
   return (
     <g transform={`translate(${x} 270)`}>
-      <ellipse cx="0" cy="2" rx={kid ? 15 : 22} ry="4" fill="#000" opacity=".25" />
+      <ellipse cx="0" cy="2" rx={kid ? 15 : 22} ry="4" fill="#0f172a" opacity=".13" />
       <g className="hero-bob" style={{ animationDelay: `${delay}s` }}>
         <rect x={-bw / 2 + 3} y={-legs} width={bw / 2 - 4} height={legs} rx="3" fill="#334155" />
         <rect x={1} y={-legs} width={bw / 2 - 4} height={legs} rx="3" fill="#334155" />
@@ -133,11 +133,11 @@ export default function HeroAnimation() {
       <style>{keyframes}</style>
       <defs>
         <linearGradient id="hero-card" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#1e293b" />
-          <stop offset="1" stopColor="#0f172a" />
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="1" stopColor="#f1f5f9" />
         </linearGradient>
         <radialGradient id="hero-glow" cx=".5" cy=".5" r=".5">
-          <stop offset="0" stopColor="#34d399" stopOpacity=".35" />
+          <stop offset="0" stopColor="#34d399" stopOpacity=".28" />
           <stop offset="1" stopColor="#34d399" stopOpacity="0" />
         </radialGradient>
       </defs>
@@ -152,13 +152,13 @@ export default function HeroAnimation() {
           height="170"
           rx="26"
           fill="url(#hero-card)"
-          stroke="rgba(255,255,255,.14)"
+          stroke="rgba(15,23,42,.07)"
         />
-        <text x="180" y="36" textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="600">
+        <text x="180" y="36" textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="600">
           הוצאות החודש
         </text>
 
-        <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="14" />
+        <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(15,23,42,.07)" strokeWidth="14" />
         {SEGMENTS.map((s, i) => {
           const before = SEGMENTS.slice(0, i).reduce((a, b) => a + b.amount, 0)
           const angle = (before / TOTAL) * 360 - 90
@@ -186,10 +186,10 @@ export default function HeroAnimation() {
           return (
             <g key={s.label}>
               <circle cx="170" cy={y} r="4" fill={s.color} />
-              <text x="182" y={y + 4} fill="#cbd5e1" fontSize="11" fontWeight="600">
+              <text x="182" y={y + 4} fill="#334155" fontSize="11" fontWeight="600">
                 {s.label}
               </text>
-              <rect x="232" y={y - 2} width="84" height="5" rx="2.5" fill="rgba(255,255,255,.08)" />
+              <rect x="232" y={y - 2} width="84" height="5" rx="2.5" fill="rgba(15,23,42,.08)" />
               <rect
                 className="hero-bar"
                 x="232"
@@ -205,7 +205,7 @@ export default function HeroAnimation() {
         })}
       </g>
 
-      <path d="M 20 272 H 340" stroke="rgba(255,255,255,.12)" strokeWidth="2" strokeLinecap="round" />
+      <path d="M 20 272 H 340" stroke="rgba(15,23,42,.14)" strokeWidth="2" strokeLinecap="round" />
 
       <Person x={95} shirt="#34d399" hair="#7c2d12" skin="#fcd9b6" long wave delay={0} />
       <Person x={150} kid shirt="#fbbf24" hair="#1e293b" skin="#f8c9a0" delay={0.4} />
@@ -214,8 +214,8 @@ export default function HeroAnimation() {
 
       {SEGMENTS.map((s, i) => (
         <g key={s.label} className="hero-chip" style={{ animation: `chip${i} ${CYCLE}s ease-in-out infinite` }}>
-          <rect x="-34" y="-13" width="68" height="26" rx="13" fill="#0f172a" stroke={s.color} strokeWidth="1.5" />
-          <text x="0" y="4" textAnchor="middle" fill="#f8fafc" fontSize="11" fontWeight="700">
+          <rect x="-34" y="-13" width="68" height="26" rx="13" fill="#ffffff" stroke={s.color} strokeWidth="1.5" />
+          <text x="0" y="4" textAnchor="middle" fill="#0f172a" fontSize="11" fontWeight="700">
             {s.icon} {fmt(s.amount)}
           </text>
         </g>

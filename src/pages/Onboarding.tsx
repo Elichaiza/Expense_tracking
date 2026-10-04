@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import Aurora from '../components/Aurora'
+import TopBar from '../components/TopBar'
 
 export default function Onboarding({ onDone }: { onDone: () => void }) {
   const [mode, setMode] = useState<'create' | 'join'>('create')
@@ -25,59 +26,77 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
 
   return (
     <Aurora>
-    <div className="min-h-full flex flex-col justify-center px-5 max-w-md mx-auto">
-      <h1 className="text-3xl font-extrabold mb-1 bg-gradient-to-l from-emerald-300 to-sky-300 bg-clip-text text-transparent animate-rise">
-        ברוכים הבאים 👋
-      </h1>
-      <p className="text-slate-400 text-sm mb-6 animate-rise">עוד רגע מתחילים לעקוב אחרי ההוצאות</p>
-      <div className="glass p-5 animate-rise" style={{ animationDelay: '.1s' }}>
-      <div className="grid grid-cols-2 gap-2 mb-5">
+      <TopBar />
+      <div className="max-w-md mx-auto px-5 pt-10 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+        <h1 className="text-3xl font-extrabold mb-1 bg-gradient-to-l from-emerald-600 to-sky-600 bg-clip-text text-transparent animate-rise">
+          ברוכים הבאים 👋
+        </h1>
+        <p className="text-slate-500 text-sm mb-6 animate-rise">עוד רגע מתחילים לעקוב אחרי ההוצאות</p>
+
+        <div className="glass p-5 animate-rise" style={{ animationDelay: '.1s' }}>
+          <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-200/70 text-sm font-semibold mb-4">
+            {(
+              [
+                ['create', 'משפחה חדשה'],
+                ['join', 'יש לי קוד הזמנה'],
+              ] as const
+            ).map(([m, label]) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => {
+                  setMode(m)
+                  setMsg('')
+                }}
+                className={`py-2 rounded-xl transition ${
+                  mode === m ? 'bg-white text-slate-900 shadow' : 'text-slate-500'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={submit} className="space-y-3">
+            <input
+              className="field-light"
+              placeholder="השם שלך"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            {mode === 'create' ? (
+              <input
+                className="field-light"
+                placeholder="שם המשפחה"
+                value={familyName}
+                onChange={(e) => setFamilyName(e.target.value)}
+                required
+              />
+            ) : (
+              <input
+                className="field-light"
+                dir="ltr"
+                placeholder="קוד הזמנה"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                required
+              />
+            )}
+            <button className="btn-primary w-full" disabled={busy}>
+              {busy ? 'רגע…' : mode === 'create' ? 'יצירה' : 'הצטרפות'}
+            </button>
+            {msg && <p className="text-red-600 text-sm text-center">{msg}</p>}
+          </form>
+        </div>
+
         <button
-          className={mode === 'create' ? 'btn' : 'btn-ghost'}
-          onClick={() => setMode('create')}
+          className="mt-6 mx-auto block text-slate-500 underline"
+          onClick={() => supabase.auth.signOut()}
         >
-          משפחה חדשה
-        </button>
-        <button className={mode === 'join' ? 'btn' : 'btn-ghost'} onClick={() => setMode('join')}>
-          יש לי קוד הזמנה
+          התנתקות
         </button>
       </div>
-      <form onSubmit={submit} className="space-y-3">
-        <input
-          className="field"
-          placeholder="השם שלך"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        {mode === 'create' ? (
-          <input
-            className="field"
-            placeholder="שם המשפחה"
-            value={familyName}
-            onChange={(e) => setFamilyName(e.target.value)}
-            required
-          />
-        ) : (
-          <input
-            className="field"
-            dir="ltr"
-            placeholder="קוד הזמנה"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-          />
-        )}
-        <button className="btn-primary w-full" disabled={busy}>
-          {mode === 'create' ? 'יצירה' : 'הצטרפות'}
-        </button>
-        {msg && <p className="text-amber-300 text-sm">{msg}</p>}
-      </form>
-      </div>
-      <button className="mt-6 text-slate-400 underline" onClick={() => supabase.auth.signOut()}>
-        התנתקות
-      </button>
-    </div>
     </Aurora>
   )
 }

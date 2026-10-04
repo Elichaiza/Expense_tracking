@@ -35,12 +35,24 @@ button {
 
 /* ---------- מסכי כניסה ---------- */
 .glass {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(255, 255, 255, 0.72);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.95);
   border-radius: 28px;
-  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 20px 50px -22px rgba(13, 148, 136, 0.35), 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.field-light {
+  @apply w-full rounded-xl bg-white border border-slate-200 px-4 py-3 text-base text-slate-900 placeholder-slate-400 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15;
+}
+
+/* שדות שהדפדפן משלים אוטומטית נשארים לבנים עם טקסט כהה */
+.field-light:-webkit-autofill,
+.field-light:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #fff inset;
+  -webkit-text-fill-color: #0f172a;
+  caret-color: #0f172a;
 }
 
 .aurora {
@@ -56,23 +68,23 @@ button {
   max-width: 600px;
   max-height: 600px;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.45;
+  filter: blur(70px);
+  opacity: 0.55;
 }
 .aurora-a {
-  background: radial-gradient(circle, #10b981, transparent 70%);
+  background: radial-gradient(circle, #6ee7b7, transparent 70%);
   top: -20%;
   right: -25%;
   animation: drift-a 16s ease-in-out infinite alternate;
 }
 .aurora-b {
-  background: radial-gradient(circle, #0ea5e9, transparent 70%);
+  background: radial-gradient(circle, #7dd3fc, transparent 70%);
   bottom: -25%;
   left: -30%;
   animation: drift-b 20s ease-in-out infinite alternate;
 }
 .aurora-c {
-  background: radial-gradient(circle, #8b5cf6, transparent 70%);
+  background: radial-gradient(circle, #c4b5fd, transparent 70%);
   top: 35%;
   right: -35%;
   opacity: 0.25;
@@ -101,6 +113,7 @@ button {
 
 /* ---------- אנימציית המשפחה ---------- */
 .hero-card {
+  filter: drop-shadow(0 12px 18px rgba(15, 23, 42, 0.14));
   animation: card-float 6s ease-in-out infinite;
 }
 @keyframes card-float {
