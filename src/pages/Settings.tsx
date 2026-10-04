@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Category, Household } from '../lib/types'
+import { formatMoney } from '../lib/format'
+import type { Category, Household, Recurring } from '../lib/types'
 import BiometricToggle from '../components/BiometricToggle'
 
 type Props = {
   household: Household
   categories: Category[]
+  recurring: Recurring[]
   onChanged: () => void
 }
 
-export default function Settings({ household, categories, onChanged }: Props) {
+export default function Settings({ household, categories, recurring, onChanged }: Props) {
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('🏷️')
   const [copied, setCopied] = useState(false)
@@ -34,6 +36,12 @@ export default function Settings({ household, categories, onChanged }: Props) {
     onChanged()
   }
 
+  async function stopRecurring(r: Recurring) {
+    if (!confirm(`לעצור את "${r.title}"? הוצאות שכבר נוספו יישארו.`)) return
+    await supabase.from('recurring_expenses').delete().eq('id', r.id)
+    onChanged()
+  }
+
   async function removeCategory(c: Category) {
     if (!confirm(`למחוק את הקטגוריה "${c.name}"? הוצאות קיימות יישארו ללא קטגוריה.`)) return
     await supabase.from('categories').delete().eq('id', c.id)
@@ -53,6 +61,38 @@ export default function Settings({ household, categories, onChanged }: Props) {
       </section>
 
       <BiometricToggle variant="settings" />
+
+      <section>
+        <h2 className="font-bold mb-2">הוצאות קבועות</h2>
+        {recurring.length === 0 ? (
+          <p className="text-sm text-slate-400">
+            אין הוצאות קבועות. כדי להוסיף, סמן "הוצאה קבועה כל חודש" בהוספת הוצאה.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {recurring.map((r) => {
+              const cat = categories.find((c) => c.id === r.category_id)
+              return (
+                <li key={r.id} className="flex items-center gap-3 bg-slate-800/60 rounded-2xl p-3">
+                  <span className="text-xl">{cat?.icon ?? '🔁'}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="truncate">{r.title}</div>
+                    <div className="text-xs text-slate-400">ב-{r.day_of_month} בכל חודש</div>
+                  </div>
+                  <span className="font-semibold">{formatMoney(r.amount)}</span>
+                  <button
+                    className="text-slate-500 px-1"
+                    aria-label="עצירת הוצאה קבועה"
+                    onClick={() => stopRecurring(r)}
+                  >
+                    ✕
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
 
       <section>
         <h2 className="font-bold mb-2">קטגוריות</h2>

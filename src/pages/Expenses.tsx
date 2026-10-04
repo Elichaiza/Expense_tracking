@@ -59,6 +59,7 @@ export default function Expenses({ householdId, expenses, categories, members, o
               <div className="font-medium truncate">{x.title}</div>
               <div className="text-xs text-slate-400">
                 {cat?.name ?? 'ללא קטגוריה'} · {formatDate(x.spent_at)}
+                {x.recurring_id ? ' · 🔁 קבועה' : ''}
                 {members[x.user_id] ? ` · ${members[x.user_id]}` : ''}
               </div>
             </div>

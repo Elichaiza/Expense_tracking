@@ -18,6 +18,7 @@ export default function AddExpense({ householdId, categories, onClose, onSaved }
   const [title, setTitle] = useState('')
   const [categoryId, setCategoryId] = useState('')
   const [date, setDate] = useState(todayIso())
+  const [recurring, setRecurring] = useState(false) // ברירת מחדל: הוצאה חד-פעמית
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -32,14 +33,23 @@ export default function AddExpense({ householdId, categories, onClose, onSaved }
       finalCategory = categoryId
       await saveRule(householdId, name, categoryId) // בחירה ידנית נלמדת לפעם הבאה
     }
-    const { error } = await supabase.from('expenses').insert({
+    const row = {
       household_id: householdId,
       amount: Number(amount),
       title: name,
       merchant: name,
       category_id: finalCategory,
-      spent_at: date,
-    })
+    }
+    let error
+    if (recurring) {
+      // נשמרת תבנית, וההוצאה הראשונה (והבאות) נוצרות ממנה אוטומטית
+      ;({ error } = await supabase
+        .from('recurring_expenses')
+        .insert({ ...row, day_of_month: Number(date.slice(8, 10)), start_date: date }))
+      if (!error) ({ error } = await supabase.rpc('generate_recurring', { p_household: householdId }))
+    } else {
+      ;({ error } = await supabase.from('expenses').insert({ ...row, spent_at: date }))
+    }
     setBusy(false)
     if (error) return setMsg(error.message)
     onSaved()
@@ -89,6 +99,23 @@ export default function AddExpense({ householdId, categories, onClose, onSaved }
           onChange={(e) => setDate(e.target.value)}
           required
         />
+        <label className="flex items-center gap-3 select-none cursor-pointer py-1">
+          <input
+            type="checkbox"
+            className="peer sr-only"
+            checked={recurring}
+            onChange={(e) => setRecurring(e.target.checked)}
+          />
+          <span className="w-6 h-6 shrink-0 rounded-md border-2 border-slate-600 grid place-items-center text-sm font-bold text-slate-950 peer-checked:bg-emerald-400 peer-checked:border-emerald-400 peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-300">
+            {recurring && '✓'}
+          </span>
+          <span className="text-slate-200">🔁 הוצאה קבועה כל חודש</span>
+        </label>
+        {recurring && (
+          <p className="text-xs text-slate-400 -mt-1">
+            תתווסף אוטומטית ב-{Number(date.slice(8, 10)) || ''} בכל חודש, החל מהתאריך שנבחר.
+          </p>
+        )}
         <div className="grid grid-cols-3 gap-2">
           <button className="btn col-span-2" disabled={busy}>
             {busy ? 'שומר…' : 'שמירה'}

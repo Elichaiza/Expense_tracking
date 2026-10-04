@@ -26,7 +26,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 function Main({ household }: { household: Household }) {
   const [tab, setTab] = useState<Tab>('expenses')
   const [adding, setAdding] = useState(false)
-  const { expenses, categories, members, loading, reload } = useHouseholdData(household.id)
+  const { expenses, categories, recurring, members, loading, reload } = useHouseholdData(household.id)
 
   return (
     <div className="h-full flex flex-col max-w-md mx-auto">
@@ -48,7 +48,12 @@ function Main({ household }: { household: Household }) {
         ) : tab === 'summary' ? (
           <Summary expenses={expenses} categories={categories} />
         ) : (
-          <Settings household={household} categories={categories} onChanged={reload} />
+          <Settings
+            household={household}
+            categories={categories}
+            recurring={recurring}
+            onChanged={reload}
+          />
         )}
       </main>
 
