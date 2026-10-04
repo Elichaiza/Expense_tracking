@@ -17,9 +17,7 @@ import { MonthSwitcher } from './components/ui'
 import {
   IconChart, IconExpense, IconHome, IconIncome, IconPlus, IconSettings,
 } from './components/Icons'
-import { disable, isEnabled } from './lib/biometric'
-
-const RELOCK_AFTER_MS = 60_000
+import { disable, shouldLock, touchActive } from './lib/biometric'
 
 type Tab = 'home' | 'expenses' | 'income' | 'analysis' | 'settings'
 
@@ -193,7 +191,8 @@ function Main({ household }: { household: Household }) {
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
   const [household, setHousehold] = useState<Household | null | undefined>(undefined)
-  const [locked, setLocked] = useState(isEnabled)
+  // נעול רק אם הנעילה מופעלת ועברו יותר מ-7 דקות מהשימוש האחרון (גם אחרי סגירה מלאה)
+  const [locked, setLocked] = useState(shouldLock)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -223,16 +222,25 @@ export default function App() {
     }
   }, [session])
 
-  // חזרה לאפליקציה אחרי יותר מדקה ברקע נועלת אותה שוב
+  // שומרים מתי האפליקציה הייתה פעילה לאחרונה. ב-iPhone אפליקציה ברקע יכולה להיסגר
+  // בלי שום אירוע, ולכן מעדכנים גם כל כמה שניות בזמן שהיא פתוחה.
   useEffect(() => {
-    let hiddenAt = 0
+    if (!session || locked) return
+    touchActive()
+    const id = setInterval(touchActive, 15_000)
     const onVisibility = () => {
-      if (document.visibilityState === 'hidden') hiddenAt = Date.now()
-      else if (hiddenAt && isEnabled() && Date.now() - hiddenAt > RELOCK_AFTER_MS) setLocked(true)
+      if (document.visibilityState === 'hidden') touchActive()
+      else if (shouldLock()) setLocked(true)
+      else touchActive()
     }
     document.addEventListener('visibilitychange', onVisibility)
-    return () => document.removeEventListener('visibilitychange', onVisibility)
-  }, [])
+    window.addEventListener('pagehide', touchActive)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('pagehide', touchActive)
+    }
+  }, [session, locked])
 
   if (session === undefined) return <p className="text-center text-slate-400 pt-24">טוען…</p>
   if (!session) return <Login />

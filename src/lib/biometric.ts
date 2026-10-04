@@ -6,6 +6,30 @@ import { supabase } from './supabase'
 
 const KEY = 'bio_cred_id'
 const DISMISSED = 'bio_offer_dismissed'
+const ACTIVE = 'bio_last_active'
+
+/** כמה זמן אפשר להיות מחוץ לאפליקציה בלי שתידרש נעילה מחדש */
+export const GRACE_MS = 7 * 60 * 1000
+
+/** מסמן שהאפליקציה פעילה עכשיו. נשמר בטלפון, ולכן עובד גם אחרי סגירה מלאה */
+export function touchActive() {
+  try {
+    localStorage.setItem(ACTIVE, String(Date.now()))
+  } catch {
+    /* ignore */
+  }
+}
+
+/** האם צריך לנעול: הנעילה מופעלת, ועברו יותר מ-7 דקות מהפעם האחרונה שהאפליקציה הייתה פעילה */
+export function shouldLock(): boolean {
+  if (!isEnabled()) return false
+  try {
+    const last = Number(localStorage.getItem(ACTIVE))
+    return !last || Date.now() - last > GRACE_MS
+  } catch {
+    return true
+  }
+}
 
 const toB64 = (buf: ArrayBuffer) =>
   btoa(String.fromCharCode(...new Uint8Array(buf)))
@@ -87,6 +111,7 @@ export async function enable() {
   })) as PublicKeyCredential | null
   if (!cred) throw new Error('cancelled')
   localStorage.setItem(KEY, toB64(cred.rawId))
+  touchActive() // שלא תינעל מיד אחרי ההפעלה
 }
 
 /** מבקש Face ID / טביעת אצבע. true אם האימות הצליח */
