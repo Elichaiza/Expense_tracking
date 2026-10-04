@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Aurora from './Aurora'
 import TopBar from './TopBar'
 import { unlock } from '../lib/biometric'
@@ -8,24 +8,36 @@ type Props = { onUnlock: () => void; onUsePassword: () => void }
 export default function LockScreen({ onUnlock, onUsePassword }: Props) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
-
-  const run = useCallback(
-    async (manual: boolean) => {
-      setBusy(true)
-      setErr('')
-      try {
-        if (await unlock()) onUnlock()
-      } catch {
-        // ניסיון אוטומטי שנחסם (למשל באייפון ללא לחיצה) לא מציג שגיאה
-        if (manual) setErr('האימות נכשל או בוטל. נסה שוב.')
-      } finally {
-        setBusy(false)
-      }
-    },
-    [onUnlock],
-  )
+  // onUnlock מגיע כפונקציה חדשה בכל רינדור של האפליקציה. שומרים אותה ב-ref כדי
+  // שלא תגרום לבקשת Face ID חדשה בכל פעם שהאפליקציה מתרעננת ברקע.
+  const onUnlockRef = useRef(onUnlock)
+  const running = useRef(false)
+  const autoStarted = useRef(false)
 
   useEffect(() => {
+    onUnlockRef.current = onUnlock
+  })
+
+  const run = useCallback(async (manual: boolean) => {
+    if (running.current) return // בקשה אחת בכל רגע נתון
+    running.current = true
+    setBusy(true)
+    setErr('')
+    try {
+      if (await unlock()) onUnlockRef.current()
+    } catch {
+      // ניסיון אוטומטי שנחסם (למשל באייפון ללא לחיצה) לא מציג שגיאה
+      if (manual) setErr('האימות נכשל או בוטל. נסה שוב.')
+    } finally {
+      running.current = false
+      setBusy(false)
+    }
+  }, [])
+
+  // ניסיון אוטומטי אחד בלבד כשהמסך נפתח
+  useEffect(() => {
+    if (autoStarted.current) return
+    autoStarted.current = true
     run(false)
   }, [run])
 
