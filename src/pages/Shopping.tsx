@@ -74,12 +74,13 @@ export default function Shopping({ householdId }: { householdId: string }) {
     }
     setBusy(true)
     setMsg('')
-    const { data, error } = await addItems(householdId, names, rules)
+    const { data, error, learned } = await addItems(householdId, names, rules)
     setBusy(false)
     if (error || !data) {
       setMsg(error?.message ?? 'שגיאה בהוספה')
       return
     }
+    setRules((cur) => ({ ...cur, ...learned }))
     setItems((cur) => [...cur.filter((x) => !data.some((d) => d.id === x.id)), ...data])
     setText('')
   }
