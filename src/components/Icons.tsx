@@ -48,6 +48,23 @@ export const IconSettings = (p: P) => (
     <circle cx="9" cy="17" r="2" />
   </Svg>
 )
+export const IconCart = (p: P) => (
+  <Svg {...p}>
+    <path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H6.6" />
+    <circle cx="9" cy="19" r="1.4" />
+    <circle cx="17" cy="19" r="1.4" />
+  </Svg>
+)
+export const IconCheck = (p: P) => (
+  <Svg {...p}>
+    <path d="M5 12.5l4.5 4.5L19 7.5" />
+  </Svg>
+)
+export const IconSwap = (p: P) => (
+  <Svg {...p}>
+    <path d="M8 4v16M4 8l4-4 4 4M16 20V4M12 16l4 4 4-4" />
+  </Svg>
+)
 export const IconPlus = (p: P) => (
   <Svg {...p}>
     <path d="M12 5v14M5 12h14" />

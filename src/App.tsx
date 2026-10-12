@@ -9,22 +9,24 @@ import Onboarding from './pages/Onboarding'
 import Home from './pages/Home'
 import Transactions from './pages/Transactions'
 import Analysis from './pages/Analysis'
+import Shopping from './pages/Shopping'
 import Settings from './pages/Settings'
 import AddTransaction from './components/AddTransaction'
 import LockScreen from './components/LockScreen'
 import BiometricToggle from './components/BiometricToggle'
 import { MonthSwitcher } from './components/ui'
 import {
-  IconChart, IconExpense, IconHome, IconIncome, IconPlus, IconSettings,
+  IconCart, IconChart, IconExpense, IconHome, IconIncome, IconPlus, IconSettings,
 } from './components/Icons'
 import { disable, shouldLock, touchActive } from './lib/biometric'
 
-type Tab = 'home' | 'expenses' | 'income' | 'analysis' | 'settings'
+type Tab = 'home' | 'expenses' | 'income' | 'shopping' | 'analysis' | 'settings'
 
 const TABS: { id: Tab; label: string; icon: (p: { className?: string }) => ReactNode }[] = [
   { id: 'home', label: 'בית', icon: IconHome },
   { id: 'income', label: 'הכנסות', icon: IconIncome },
   { id: 'expenses', label: 'הוצאות', icon: IconExpense },
+  { id: 'shopping', label: 'קניות', icon: IconCart },
   { id: 'analysis', label: 'ניתוח', icon: IconChart },
   { id: 'settings', label: 'הגדרות', icon: IconSettings },
 ]
@@ -33,6 +35,7 @@ const TITLES: Record<Tab, string> = {
   home: 'סקירה',
   expenses: 'הוצאות',
   income: 'הכנסות',
+  shopping: 'רשימת קניות',
   analysis: 'ניתוח',
   settings: 'הגדרות',
 }
@@ -42,6 +45,7 @@ const HEADER_GRADIENT: Record<Tab, string> = {
   home: 'from-emerald-500 via-teal-500 to-sky-500',
   income: 'from-emerald-500 via-emerald-400 to-teal-400',
   expenses: 'from-rose-500 via-rose-400 to-rose-300',
+  shopping: 'from-emerald-500 via-teal-500 to-sky-500',
   analysis: 'from-emerald-500 via-teal-500 to-sky-500',
   settings: 'from-emerald-500 via-teal-500 to-sky-500',
 }
@@ -67,7 +71,7 @@ function Main({ household }: { household: Household }) {
   }, [])
 
   const kind: Kind | null = tab === 'expenses' ? 'expense' : tab === 'income' ? 'income' : null
-  const showMonth = tab !== 'settings'
+  const showMonth = tab !== 'settings' && tab !== 'shopping'
   const myName = uid ? members[uid] : ''
 
   return (
@@ -124,6 +128,8 @@ function Main({ household }: { household: Household }) {
             month={month}
             onChanged={reload}
           />
+        ) : tab === 'shopping' ? (
+          <Shopping householdId={household.id} />
         ) : tab === 'analysis' ? (
           <Analysis
             householdId={household.id}
@@ -166,7 +172,7 @@ function Main({ household }: { household: Household }) {
         className="fixed inset-x-3 z-30"
         style={{ bottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
       >
-        <div className="max-w-md mx-auto grid grid-cols-5 rounded-3xl bg-white/90 backdrop-blur-xl ring-1 ring-slate-900/5 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.35)] p-1.5">
+        <div className="max-w-md mx-auto grid grid-cols-6 rounded-3xl bg-white/90 backdrop-blur-xl ring-1 ring-slate-900/5 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.35)] p-1.5">
           {TABS.map((t) => {
             const active = tab === t.id
             return (
